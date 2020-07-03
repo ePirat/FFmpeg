@@ -40,6 +40,7 @@ typedef struct ADTSContext {
     int pce_size;
     int apetag;
     int id3v2tag;
+    int mpeg_id;
     uint8_t pce_data[MAX_PCE_SIZE];
 } ADTSContext;
 
@@ -136,7 +137,7 @@ static int adts_write_frame_header(ADTSContext *ctx,
 
     /* adts_fixed_header */
     put_bits(&pb, 12, 0xfff);   /* syncword */
-    put_bits(&pb, 1, 0);        /* ID */
+    put_bits(&pb, 1, ctx->mpeg_id); /* ID */
     put_bits(&pb, 2, 0);        /* layer */
     put_bits(&pb, 1, 1);        /* protection_absent */
     put_bits(&pb, 2, ctx->objecttype); /* profile_objecttype */
@@ -214,6 +215,9 @@ static int adts_write_trailer(AVFormatContext *s)
 static const AVOption options[] = {
     { "write_id3v2",  "Enable ID3v2 tag writing", OFFSET(id3v2tag), AV_OPT_TYPE_BOOL, {.i64 = 0}, 0, 1, ENC},
     { "write_apetag", "Enable APE tag writing",   OFFSET(apetag),   AV_OPT_TYPE_BOOL, {.i64 = 0}, 0, 1, ENC},
+    { "mpeg_id", "Select which MPEG ID to write", OFFSET(mpeg_id),  AV_OPT_TYPE_INT,  {.i64 = 0}, 0, 1, ENC, "mpeg_id"},
+    {     "MPEG4",  NULL, 0, AV_OPT_TYPE_CONST,  {.i64 = 0},  0, 0, ENC, "mpeg_id" },
+    {     "MPEG2",  NULL, 0, AV_OPT_TYPE_CONST,  {.i64 = 1},  0, 0, ENC, "mpeg_id" },
     { NULL },
 };
 
