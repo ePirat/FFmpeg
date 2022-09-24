@@ -142,7 +142,17 @@ include $(SRC_PATH)/$(1)/Makefile
 include $(SRC_PATH)/ffbuild/library.mak
 endef
 
+define DODISABLEDSUBDIR
+$(foreach V,$(SUBDIR_VARS),$(eval $(call RESET,$(V))))
+SUBDIR := $(1)/
+include $(SRC_PATH)/$(1)/Makefile
+DISABLEDINSTHEADERS := $$(DISABLEDINSTHEADERS) $$(HEADERS:%=$$(SUBDIR)%)
+endef
+
+DISABLEDFFLIBS := $(filter-out $(FFLIBS),$(ALLFFLIBS))
+
 $(foreach D,$(FFLIBS),$(eval $(call DOSUBDIR,lib$(D))))
+$(foreach D,$(DISABLEDFFLIBS),$(eval $(call DODISABLEDSUBDIR,lib$(D))))
 
 include $(SRC_PATH)/fftools/Makefile
 include $(SRC_PATH)/doc/Makefile

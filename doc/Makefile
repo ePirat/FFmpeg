@@ -102,7 +102,7 @@ doc/%.3: doc/%.pod $(GENTEXI)
 
 $(DOCS) doc/doxy/html: | doc/
 
-DOXY_INPUT      = $(INSTHEADERS)
+DOXY_INPUT      = $(INSTHEADERS) $(DISABLEDINSTHEADERS)
 DOXY_INPUT_DEPS = $(addprefix $(SRC_PATH)/, $(DOXY_INPUT)) ffbuild/config.mak
 
 doc/doxy/html: TAG = DOXY
