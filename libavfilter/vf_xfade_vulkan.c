@@ -72,6 +72,10 @@ enum XFadeTransitions {
     WIPERIGHT,
     WIPEUP,
     WIPEDOWN,
+    SLIDEDOWN,
+    SLIDEUP,
+    SLIDELEFT,
+    SLIDERIGHT,
     NB_TRANSITIONS,
 };
 
@@ -128,12 +132,62 @@ static const char transition_wipedown[] = {
     C(0, }                                                                     )
 };
 
+#define SHADER_SLIDE_COMMON                                                              \
+    C(0, void slide(int idx, ivec2 pos, float progress, ivec2 direction)               ) \
+    C(0, {                                                                             ) \
+    C(1,     ivec2 size = imageSize(output_images[idx]);                               ) \
+    C(1,     ivec2 pi = ivec2(progress * size);                                        ) \
+    C(1,     ivec2 p = pos + pi * direction;                                           ) \
+    C(1,     ivec2 f = p % size;                                                       ) \
+    C(1,     f = f + size * ivec2(f.x < 0, f.y < 0);                                   ) \
+    C(1,     vec4 a = texture(a_images[idx], f);                                       ) \
+    C(1,     vec4 b = texture(b_images[idx], f);                                       ) \
+    C(1,     vec4 r = (p.y >= 0 && p.x >= 0 && size.y > p.y &&  size.x > p.x) ? a : b; ) \
+    C(1,     imageStore(output_images[idx], pos, r);                                   ) \
+    C(0, }                                                                             )
+
+static const char transition_slidedown[] = {
+    SHADER_SLIDE_COMMON
+    C(0, void transition(int idx, ivec2 pos, float progress)                   )
+    C(0, {                                                                     )
+    C(1,     slide(idx, pos, progress, ivec2(0, -1));                          )
+    C(0, }                                                                     )
+};
+
+static const char transition_slideup[] = {
+    SHADER_SLIDE_COMMON
+    C(0, void transition(int idx, ivec2 pos, float progress)                   )
+    C(0, {                                                                     )
+    C(1,     slide(idx, pos, progress, ivec2(0, +1));                          )
+    C(0, }                                                                     )
+};
+
+static const char transition_slideleft[] = {
+    SHADER_SLIDE_COMMON
+    C(0, void transition(int idx, ivec2 pos, float progress)                   )
+    C(0, {                                                                     )
+    C(1,     slide(idx, pos, progress, ivec2(+1, 0));                          )
+    C(0, }                                                                     )
+};
+
+static const char transition_slideright[] = {
+    SHADER_SLIDE_COMMON
+    C(0, void transition(int idx, ivec2 pos, float progress)                   )
+    C(0, {                                                                     )
+    C(1,     slide(idx, pos, progress, ivec2(-1, 0));                          )
+    C(0, }                                                                     )
+};
+
 static const char* transitions_map[NB_TRANSITIONS] = {
     [FADE]      = transition_fade,
     [WIPELEFT]  = transition_wipeleft,
     [WIPERIGHT] = transition_wiperight,
     [WIPEUP]    = transition_wipeup,
     [WIPEDOWN]  = transition_wipedown,
+    [SLIDEDOWN] = transition_slidedown,
+    [SLIDEUP]   = transition_slideup,
+    [SLIDELEFT] = transition_slideleft,
+    [SLIDERIGHT]= transition_slideright,
 };
 
 static av_cold int init_vulkan(AVFilterContext *avctx)
@@ -481,6 +535,10 @@ static const AVOption xfade_vulkan_options[] = {
         { "wiperight", "wipe right transition", 0, AV_OPT_TYPE_CONST, {.i64=WIPERIGHT}, 0, 0, FLAGS, "transition" },
         { "wipeup",    "wipe up transition", 0, AV_OPT_TYPE_CONST, {.i64=WIPEUP}, 0, 0, FLAGS, "transition" },
         { "wipedown",  "wipe down transition", 0, AV_OPT_TYPE_CONST, {.i64=WIPEDOWN}, 0, 0, FLAGS, "transition" },
+        { "slidedown", "slide down transition", 0, AV_OPT_TYPE_CONST, {.i64=SLIDEDOWN}, 0, 0, FLAGS, "transition" },
+        { "slideup",   "slide up transition", 0, AV_OPT_TYPE_CONST, {.i64=SLIDEUP}, 0, 0, FLAGS, "transition" },
+        { "slideleft", "slide left transition", 0, AV_OPT_TYPE_CONST, {.i64=SLIDELEFT}, 0, 0, FLAGS, "transition" },
+        { "slideright","slide right transition", 0, AV_OPT_TYPE_CONST, {.i64=SLIDERIGHT}, 0, 0, FLAGS, "transition" },
     { "duration", "set cross fade duration", OFFSET(duration), AV_OPT_TYPE_DURATION, {.i64=1000000}, 0, 60000000, FLAGS },
     { "offset",   "set cross fade start relative to first input stream", OFFSET(offset), AV_OPT_TYPE_DURATION, {.i64=0}, INT64_MIN, INT64_MAX, FLAGS },
     { NULL }
