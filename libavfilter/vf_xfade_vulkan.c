@@ -70,6 +70,7 @@ enum XFadeTransitions {
     FADE,
     WIPELEFT,
     WIPERIGHT,
+    WIPEUP,
     NB_TRANSITIONS,
 };
 
@@ -104,10 +105,22 @@ static const char transition_wiperight[] = {
     C(0, }                                                                     )
 };
 
+static const char transition_wipeup[] = {
+    C(0, void transition(int idx, ivec2 pos, float progress)                   )
+    C(0, {                                                                     )
+    C(1,     ivec2 size = imageSize(output_images[idx]);                       )
+    C(1,     int  s = int(size.y * (1.0 - progress));                          )
+    C(1,     vec4 a = texture(a_images[idx], pos);                             )
+    C(1,     vec4 b = texture(b_images[idx], pos);                             )
+    C(1,     imageStore(output_images[idx], pos, pos.y > s ? b : a);           )
+    C(0, }                                                                     )
+};
+
 static const char* transitions_map[NB_TRANSITIONS] = {
     [FADE]      = transition_fade,
     [WIPELEFT]  = transition_wipeleft,
     [WIPERIGHT] = transition_wiperight,
+    [WIPEUP]    = transition_wipeup,
 };
 
 static av_cold int init_vulkan(AVFilterContext *avctx)
@@ -453,6 +466,7 @@ static const AVOption xfade_vulkan_options[] = {
         { "fade",      "fade transition", 0, AV_OPT_TYPE_CONST, {.i64=FADE}, 0, 0, FLAGS, "transition" },
         { "wipeleft",  "wipe left transition", 0, AV_OPT_TYPE_CONST, {.i64=WIPELEFT}, 0, 0, FLAGS, "transition" },
         { "wiperight", "wipe right transition", 0, AV_OPT_TYPE_CONST, {.i64=WIPERIGHT}, 0, 0, FLAGS, "transition" },
+        { "wipeup",    "wipe up transition", 0, AV_OPT_TYPE_CONST, {.i64=WIPEUP}, 0, 0, FLAGS, "transition" },
     { "duration", "set cross fade duration", OFFSET(duration), AV_OPT_TYPE_DURATION, {.i64=1000000}, 0, 60000000, FLAGS },
     { "offset",   "set cross fade start relative to first input stream", OFFSET(offset), AV_OPT_TYPE_DURATION, {.i64=0}, INT64_MIN, INT64_MAX, FLAGS },
     { NULL }
