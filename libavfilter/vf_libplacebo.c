@@ -79,6 +79,8 @@ static const char *const var_names[] = {
     "crop_h", "ch", ///< evaluated input crop height
     "pos_w", "pw",  ///< evaluated output placement width
     "pos_h", "ph",  ///< evaluated output placement height
+    "prev_x0", "prev_y0", ///< evaluated crop of previous input
+    "prev_x1", "prev_y1",
     "a",            ///< iw/ih
     "sar",          ///< input pixel aspect ratio
     "dar",          ///< output pixel aspect ratio
@@ -102,6 +104,8 @@ enum var_name {
     VAR_CROP_H, VAR_CH,
     VAR_POS_W,  VAR_PW,
     VAR_POS_H,  VAR_PH,
+    VAR_PREV_X0, VAR_PREV_Y0,
+    VAR_PREV_X1, VAR_PREV_Y1,
     VAR_A,
     VAR_SAR,
     VAR_DAR,
@@ -126,6 +130,7 @@ typedef struct LibplaceboInput {
     AVFifo *out_pts; ///< timestamps of wanted output frames
     int64_t status_pts;
     int status;
+    struct pl_rect2df pos; ///< previous placed position
 } LibplaceboInput;
 
 typedef struct LibplaceboContext {
@@ -769,6 +774,17 @@ static void update_crops(AVFilterContext *ctx, LibplaceboInput *in,
         s->var_values[VAR_POS_W]  = s->var_values[VAR_PW] = NAN;
         s->var_values[VAR_POS_H]  = s->var_values[VAR_PH] = NAN;
 
+        if (in->idx == 0) {
+            s->var_values[VAR_PREV_X0] = s->var_values[VAR_PREV_X1] = 0.0f;
+            s->var_values[VAR_PREV_Y0] = s->var_values[VAR_PREV_Y1] = 0.0f;
+        } else {
+            const LibplaceboInput *prev = &s->inputs[in->idx - 1];
+            s->var_values[VAR_PREV_X0] = prev->pos.x0;
+            s->var_values[VAR_PREV_X1] = prev->pos.x1;
+            s->var_values[VAR_PREV_Y0] = prev->pos.y0;
+            s->var_values[VAR_PREV_Y1] = prev->pos.y1;
+        }
+
         /* Compute dimensions first and placement second */
         s->var_values[VAR_CROP_W] = s->var_values[VAR_CW] =
             av_expr_eval(s->crop_w_pexpr, s->var_values, NULL);
@@ -801,6 +817,8 @@ static void update_crops(AVFilterContext *ctx, LibplaceboInput *in,
             }
         }
     }
+
+    in->pos = target->crop;
 }
 
 /* Construct and emit an output frame for a given timestamp */
