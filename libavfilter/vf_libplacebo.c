@@ -71,6 +71,7 @@ enum {
 
 static const char *const var_names[] = {
     "in_idx", "idx",///< index of input
+    "first_idx", "fidx", ///< index of still active index
     "in_w", "iw",   ///< width  of the input video frame
     "in_h", "ih",   ///< height of the input video frame
     "out_w", "ow",  ///< width  of the output video frame
@@ -96,6 +97,7 @@ static const char *const var_names[] = {
 
 enum var_name {
     VAR_IN_IDX, VAR_IDX,
+    VAR_FIRST_IDX, VAR_FIDX,
     VAR_IN_W,   VAR_IW,
     VAR_IN_H,   VAR_IH,
     VAR_OUT_W,  VAR_OW,
@@ -759,6 +761,14 @@ static void update_crops(AVFilterContext *ctx, LibplaceboInput *in,
 
         /* Update dynamic variables */
         s->var_values[VAR_IN_IDX] = s->var_values[VAR_IDX] = in->idx;
+        s->var_values[VAR_FIRST_IDX] = s->var_values[VAR_FIDX] = 0;
+        for (int j = 0; j < s->nb_inputs; j++) {
+            const LibplaceboInput *in = &s->inputs[j];
+            if (in->qstatus != PL_QUEUE_EOF && in->qstatus != PL_QUEUE_ERR) {
+                s->var_values[VAR_FIRST_IDX] = s->var_values[VAR_FIDX] = j;
+                break;
+            }
+        }
         s->var_values[VAR_IN_W]   = s->var_values[VAR_IW] = in->link->w;
         s->var_values[VAR_IN_H]   = s->var_values[VAR_IH] = in->link->h;
         s->var_values[VAR_A]      = (double) in->link->w / in->link->h;
