@@ -7429,6 +7429,7 @@ check_cflags -Wundef
 check_cflags -Wmissing-prototypes
 check_cflags -Wstrict-prototypes
 check_cflags -Wempty-body
+check_cflags -Wshadow
 
 if enabled extra_warnings; then
     check_cflags -Wcast-qual
