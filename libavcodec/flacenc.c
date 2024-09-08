@@ -952,7 +952,7 @@ static int lpc_encode_choose_datapath(FlacEncodeContext *s, int32_t bps,
 
 static int encode_residual_ch(FlacEncodeContext *s, int ch)
 {
-    int i, n;
+    int n;
     int min_order, max_order, opt_order, omethod;
     FlacFrame *frame;
     FlacSubframe *sub;
@@ -970,6 +970,7 @@ static int encode_residual_ch(FlacEncodeContext *s, int ch)
 
     /* CONSTANT */
     if (sub->obits > 32) {
+        int i;
         for (i = 1; i < n; i++)
             if(smp_33bps[i] != smp_33bps[0])
                 break;
@@ -978,6 +979,7 @@ static int encode_residual_ch(FlacEncodeContext *s, int ch)
             return subframe_count_exact(s, sub, 0);
         }
     } else {
+        int i;
         for (i = 1; i < n; i++)
             if(smp[i] != smp[0])
                 break;
@@ -1001,6 +1003,7 @@ static int encode_residual_ch(FlacEncodeContext *s, int ch)
     sub->type = FLAC_SUBFRAME_FIXED;
     if (s->options.lpc_type == FF_LPC_TYPE_NONE  ||
         s->options.lpc_type == FF_LPC_TYPE_FIXED || n <= max_order) {
+        int i;
         uint64_t bits[MAX_FIXED_ORDER+1];
         if (max_order > MAX_FIXED_ORDER)
             max_order = MAX_FIXED_ORDER;
@@ -1045,7 +1048,7 @@ static int encode_residual_ch(FlacEncodeContext *s, int ch)
          * probably isn't predictable anyway, throw away LSB for analysis
          * so it fits 32 bit int and existing function can be used
          * unmodified */
-        for (i = 0; i < n; i++)
+        for (int i = 0; i < n; i++)
             smp[i] = smp_33bps[i] >> 1;
 
     opt_order = ff_lpc_calc_coefs(&s->lpc_ctx, smp, n, min_order, max_order,
@@ -1062,7 +1065,7 @@ static int encode_residual_ch(FlacEncodeContext *s, int ch)
         int opt_index   = levels-1;
         opt_order       = max_order-1;
         bits[opt_index] = UINT32_MAX;
-        for (i = levels-1; i >= 0; i--) {
+        for (int i = levels-1; i >= 0; i--) {
             int last_order = order;
             order = min_order + (((max_order-min_order+1) * (i+1)) / levels)-1;
             order = av_clip(order, min_order - 1, max_order - 1);
@@ -1082,7 +1085,7 @@ static int encode_residual_ch(FlacEncodeContext *s, int ch)
         uint64_t bits[MAX_LPC_ORDER];
         opt_order = 0;
         bits[0]   = UINT32_MAX;
-        for (i = min_order-1; i < max_order; i++) {
+        for (int i = min_order-1; i < max_order; i++) {
             if(lpc_encode_choose_datapath(s, sub->obits, res, smp, smp_33bps, n, i+1, coefs[i], shift[i]))
                 continue;
             bits[i] = find_subframe_rice_params(s, sub, i+1);
@@ -1092,14 +1095,13 @@ static int encode_residual_ch(FlacEncodeContext *s, int ch)
         opt_order++;
     } else if (omethod == ORDER_METHOD_LOG) {
         uint64_t bits[MAX_LPC_ORDER];
-        int step;
 
         opt_order = min_order - 1 + (max_order-min_order)/3;
         memset(bits, -1, sizeof(bits));
 
-        for (step = 16; step; step >>= 1) {
+        for (int step = 16; step; step >>= 1) {
             int last = opt_order;
-            for (i = last-step; i <= last+step; i += step) {
+            for (int i = last-step; i <= last+step; i += step) {
                 if (i < min_order-1 || i >= max_order || bits[i] < UINT32_MAX)
                     continue;
                 if(lpc_encode_choose_datapath(s, sub->obits, res, smp, smp_33bps, n, i+1, coefs[i], shift[i]))
@@ -1114,24 +1116,24 @@ static int encode_residual_ch(FlacEncodeContext *s, int ch)
 
     if (s->options.multi_dim_quant) {
         int allsteps = 1;
-        int i, step, improved;
+        int improved;
         int64_t best_score = INT64_MAX;
         int32_t qmax;
 
         qmax = (1 << (s->options.lpc_coeff_precision - 1)) - 1;
 
-        for (i=0; i<opt_order; i++)
+        for (int i = 0; i < opt_order; i++)
             allsteps *= 3;
 
         do {
             improved = 0;
-            for (step = 0; step < allsteps; step++) {
+            for (int step = 0; step < allsteps; step++) {
                 int tmp = step;
                 int32_t lpc_try[MAX_LPC_ORDER];
                 int64_t score = 0;
                 int diffsum = 0;
 
-                for (i=0; i<opt_order; i++) {
+                for (int i = 0; i < opt_order; i++) {
                     int diff = ((tmp + 1) % 3) - 1;
                     lpc_try[i] = av_clip(coefs[opt_order - 1][i] + diff, -qmax, qmax);
                     tmp /= 3;
@@ -1155,7 +1157,7 @@ static int encode_residual_ch(FlacEncodeContext *s, int ch)
     sub->order     = opt_order;
     sub->type_code = sub->type | (sub->order-1);
     sub->shift     = shift[sub->order-1];
-    for (i = 0; i < sub->order; i++)
+    for (int i = 0; i < sub->order; i++)
         sub->coefs[i] = coefs[sub->order-1][i];
 
     if(lpc_encode_choose_datapath(s, sub->obits, res, smp, smp_33bps, n, sub->order, sub->coefs, sub->shift)) {
