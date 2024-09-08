@@ -158,7 +158,7 @@ static int simple_lbg(ELBGContext *elbg,
                       int *points,
                       cell *cells)
 {
-    int i, idx;
+    int i;
     int numpoints[2] = {0,0};
     int *newcentroid[2] = {
         elbg->scratchbuf + 3*dim,
@@ -172,7 +172,7 @@ static int simple_lbg(ELBGContext *elbg,
     newutility[1] = 0;
 
     for (tempcell = cells; tempcell; tempcell=tempcell->next) {
-        idx = distance_limited(centroid[0], points + tempcell->index*dim, dim, INT_MAX)>=
+        int idx = distance_limited(centroid[0], points + tempcell->index*dim, dim, INT_MAX)>=
               distance_limited(centroid[1], points + tempcell->index*dim, dim, INT_MAX);
         numpoints[idx]++;
         for (i=0; i<dim; i++)
@@ -366,7 +366,7 @@ static void do_elbg(ELBGContext *restrict elbg, int *points, int numpoints,
                     int max_steps)
 {
     int *const size_part = elbg->size_part;
-    int i, j, steps = 0;
+    int j, steps = 0;
     int best_idx = 0;
     int last_error;
 
@@ -384,7 +384,7 @@ static void do_elbg(ELBGContext *restrict elbg, int *points, int numpoints,
 
         /* This loop evaluate the actual Voronoi partition. It is the most
            costly part of the algorithm. */
-        for (i=0; i < numpoints; i++) {
+        for (int i = 0; i < numpoints; i++) {
             int best_dist = distance_limited(elbg->points   + i * elbg->dim,
                                              elbg->codebook + best_idx * elbg->dim,
                                              elbg->dim, INT_MAX);
@@ -413,7 +413,7 @@ static void do_elbg(ELBGContext *restrict elbg, int *points, int numpoints,
 
         memset(elbg->codebook, 0, elbg->num_cb * elbg->dim * sizeof(*elbg->codebook));
 
-        for (i=0; i < numpoints; i++) {
+        for (int i = 0; i < numpoints; i++) {
             size_part[elbg->nearest_cb[i]]++;
             for (j=0; j < elbg->dim; j++)
                 elbg->codebook[elbg->nearest_cb[i]*elbg->dim + j] +=
