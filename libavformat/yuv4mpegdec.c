@@ -36,7 +36,7 @@ static int yuv4_read_header(AVFormatContext *s)
     char header[MAX_YUV4_HEADER + 10];  // Include headroom for
                                         // the longest option
     char *tokstart, *tokend, *header_end;
-    int i;
+    size_t i;
     AVIOContext *pb = s->pb;
     int width = -1, height  = -1, raten   = 0,
         rated =  0, aspectn =  0, aspectd = 0;
@@ -197,7 +197,7 @@ static int yuv4_read_header(AVFormatContext *s)
                 };
                 // Older nonstandard pixel format representation
                 tokstart += 6;
-                for (size_t i = 0; i < FF_ARRAY_ELEMS(pix_fmt_array); i++)
+                for (i = 0; i < FF_ARRAY_ELEMS(pix_fmt_array); i++)
                     if (av_strstart(tokstart, pix_fmt_array[i].name, NULL)) {
                         alt_pix_fmt = pix_fmt_array[i].pix_fmt;
                         break;
