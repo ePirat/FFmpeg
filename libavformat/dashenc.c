@@ -277,10 +277,8 @@ static const char *get_extension_str(SegmentType type, int single_file)
 
 static int handle_io_open_error(AVFormatContext *s, int err, char *url) {
     DASHContext *c = s->priv_data;
-    char errbuf[AV_ERROR_MAX_STRING_SIZE];
-    av_strerror(err, errbuf, sizeof(errbuf));
     av_log(s, c->ignore_io_errors ? AV_LOG_WARNING : AV_LOG_ERROR,
-           "Unable to open %s for writing: %s\n", url, errbuf);
+           "Unable to open %s for writing: %s\n", url, av_err2str(err));
     return c->ignore_io_errors ? 0 : err;
 }
 
@@ -1054,7 +1052,7 @@ static int parse_adaptation_sets(AVFormatContext *s)
         } else if ((state != new_set) && av_strstart(p, "streams=", &p)) { //descriptor and durations are optional
             state = parsing_streams;
         } else if (state == parsing_streams) {
-            AdaptationSet *as = &c->as[c->nb_as - 1];
+            AdaptationSet *tmp_as = &c->as[c->nb_as - 1];
             char idx_str[8], *end_str;
 
             n = strcspn(p, " ,");
@@ -1062,7 +1060,7 @@ static int parse_adaptation_sets(AVFormatContext *s)
             p += n;
 
             // if value is "a" or "v", map all streams of that type
-            if (as->media_type == AVMEDIA_TYPE_UNKNOWN && (idx_str[0] == 'v' || idx_str[0] == 'a')) {
+            if (tmp_as->media_type == AVMEDIA_TYPE_UNKNOWN && (idx_str[0] == 'v' || idx_str[0] == 'a')) {
                 enum AVMediaType type = (idx_str[0] == 'v') ? AVMEDIA_TYPE_VIDEO : AVMEDIA_TYPE_AUDIO;
                 av_log(s, AV_LOG_DEBUG, "Map all streams of type %s\n", idx_str);
 
@@ -1070,7 +1068,7 @@ static int parse_adaptation_sets(AVFormatContext *s)
                     if (s->streams[i]->codecpar->codec_type != type)
                         continue;
 
-                    as->media_type = s->streams[i]->codecpar->codec_type;
+                    tmp_as->media_type = s->streams[i]->codecpar->codec_type;
 
                     if ((ret = adaptation_set_add_stream(s, c->nb_as, i)) < 0)
                         return ret;
@@ -1083,8 +1081,8 @@ static int parse_adaptation_sets(AVFormatContext *s)
                 }
                 av_log(s, AV_LOG_DEBUG, "Map stream %d\n", i);
 
-                if (as->media_type == AVMEDIA_TYPE_UNKNOWN) {
-                    as->media_type = s->streams[i]->codecpar->codec_type;
+                if (tmp_as->media_type == AVMEDIA_TYPE_UNKNOWN) {
+                    tmp_as->media_type = s->streams[i]->codecpar->codec_type;
                 }
 
                 if ((ret = adaptation_set_add_stream(s, c->nb_as, i)) < 0)
@@ -1865,9 +1863,8 @@ static void dashenc_delete_file(AVFormatContext *s, char *filename) {
     } else {
         int res = ffurl_delete(filename);
         if (res < 0) {
-            char errbuf[AV_ERROR_MAX_STRING_SIZE];
-            av_strerror(res, errbuf, sizeof(errbuf));
-            av_log(s, (res == AVERROR(ENOENT) ? AV_LOG_WARNING : AV_LOG_ERROR), "failed to delete %s: %s\n", filename, errbuf);
+            av_log(s, (res == AVERROR(ENOENT) ? AV_LOG_WARNING : AV_LOG_ERROR), "failed to delete %s: %s\n",
+                filename, av_err2str(res));
         }
     }
 }
@@ -2120,7 +2117,7 @@ static int dash_write_packet(AVFormatContext *s, AVPacket *pkt)
     if (!os->availability_time_offset &&
         ((os->frag_type == FRAG_TYPE_DURATION && os->seg_duration != os->frag_duration) ||
          (os->frag_type == FRAG_TYPE_EVERY_FRAME && pkt->duration))) {
-        AdaptationSet *as = &c->as[os->as_idx - 1];
+        AdaptationSet *tmp_as = &c->as[os->as_idx - 1];
         int64_t frame_duration = 0;
 
         switch (os->frag_type) {
@@ -2134,7 +2131,7 @@ static int dash_write_packet(AVFormatContext *s, AVPacket *pkt)
 
          os->availability_time_offset = ((double) os->seg_duration -
                                          frame_duration) / AV_TIME_BASE;
-        as->max_frag_duration = FFMAX(frame_duration, as->max_frag_duration);
+        tmp_as->max_frag_duration = FFMAX(frame_duration, tmp_as->max_frag_duration);
     }
 
     if (c->use_template && !c->use_timeline) {
