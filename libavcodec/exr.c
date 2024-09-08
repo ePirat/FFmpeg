@@ -989,7 +989,7 @@ static int dwa_uncompress(const EXRContext *s, const uint8_t *src, int compresse
     int64_t ac_count, dc_count, ac_compression;
     const int dc_w = td->xsize >> 3;
     const int dc_h = td->ysize >> 3;
-    GetByteContext gb, agb;
+    GetByteContext gb;
     int skip, ret;
 
     if (compressed_size <= 88)
@@ -1103,51 +1103,54 @@ static int dwa_uncompress(const EXRContext *s, const uint8_t *src, int compresse
         bytestream2_skip(&gb, rle_csize);
     }
 
-    bytestream2_init(&agb, td->ac_data, ac_count * 2);
+    {
+        GetByteContext agb;
+        bytestream2_init(&agb, td->ac_data, ac_count * 2);
 
-    for (int y = 0; y < td->ysize; y += 8) {
-        for (int x = 0; x < td->xsize; x += 8) {
-            memset(td->block, 0, sizeof(td->block));
+        for (int y = 0; y < td->ysize; y += 8) {
+            for (int x = 0; x < td->xsize; x += 8) {
+                memset(td->block, 0, sizeof(td->block));
 
-            for (int j = 0; j < 3; j++) {
-                float *block = td->block[j];
-                const int idx = (x >> 3) + (y >> 3) * dc_w + dc_w * dc_h * j;
-                uint16_t *dc = (uint16_t *)td->dc_data;
-                union av_intfloat32 dc_val;
+                for (int j = 0; j < 3; j++) {
+                    float *block = td->block[j];
+                    const int idx = (x >> 3) + (y >> 3) * dc_w + dc_w * dc_h * j;
+                    uint16_t *dc = (uint16_t *)td->dc_data;
+                    union av_intfloat32 dc_val;
 
-                dc_val.i = half2float(dc[idx], &s->h2f_tables);
+                    dc_val.i = half2float(dc[idx], &s->h2f_tables);
 
-                block[0] = dc_val.f;
-                ac_uncompress(s, &agb, block);
-                dct_inverse(block);
-            }
+                    block[0] = dc_val.f;
+                    ac_uncompress(s, &agb, block);
+                    dct_inverse(block);
+                }
 
-            {
-                const int o = s->nb_channels == 4;
-                float *bo = ((float *)td->uncompressed_data) +
-                    y * td->xsize * s->nb_channels + td->xsize * (o + 0) + x;
-                float *go = ((float *)td->uncompressed_data) +
-                    y * td->xsize * s->nb_channels + td->xsize * (o + 1) + x;
-                float *ro = ((float *)td->uncompressed_data) +
-                    y * td->xsize * s->nb_channels + td->xsize * (o + 2) + x;
-                float *yb = td->block[0];
-                float *ub = td->block[1];
-                float *vb = td->block[2];
+                {
+                    const int o = s->nb_channels == 4;
+                    float *bo = ((float *)td->uncompressed_data) +
+                        y * td->xsize * s->nb_channels + td->xsize * (o + 0) + x;
+                    float *go = ((float *)td->uncompressed_data) +
+                        y * td->xsize * s->nb_channels + td->xsize * (o + 1) + x;
+                    float *ro = ((float *)td->uncompressed_data) +
+                        y * td->xsize * s->nb_channels + td->xsize * (o + 2) + x;
+                    float *yb = td->block[0];
+                    float *ub = td->block[1];
+                    float *vb = td->block[2];
 
-                for (int yy = 0; yy < 8; yy++) {
-                    for (int xx = 0; xx < 8; xx++) {
-                        const int idx = xx + yy * 8;
+                    for (int yy = 0; yy < 8; yy++) {
+                        for (int xx = 0; xx < 8; xx++) {
+                            const int idx = xx + yy * 8;
 
-                        convert(yb[idx], ub[idx], vb[idx], &bo[xx], &go[xx], &ro[xx]);
+                            convert(yb[idx], ub[idx], vb[idx], &bo[xx], &go[xx], &ro[xx]);
 
-                        bo[xx] = to_linear(bo[xx], 1.f);
-                        go[xx] = to_linear(go[xx], 1.f);
-                        ro[xx] = to_linear(ro[xx], 1.f);
+                            bo[xx] = to_linear(bo[xx], 1.f);
+                            go[xx] = to_linear(go[xx], 1.f);
+                            ro[xx] = to_linear(ro[xx], 1.f);
+                        }
+
+                        bo += td->xsize * s->nb_channels;
+                        go += td->xsize * s->nb_channels;
+                        ro += td->xsize * s->nb_channels;
                     }
-
-                    bo += td->xsize * s->nb_channels;
-                    go += td->xsize * s->nb_channels;
-                    ro += td->xsize * s->nb_channels;
                 }
             }
         }
@@ -1378,10 +1381,10 @@ static int decode_block(AVCodecContext *avctx, void *tdata,
             ptr = p->data[plane] + window_ymin * p->linesize[plane] + (window_xmin * 4);
 
             for (i = 0; i < ysize; i++, ptr += p->linesize[plane]) {
-                const uint8_t *src;
+                const uint8_t *tmp_src;
                 union av_intfloat32 *ptr_x;
 
-                src = channel_buffer[c];
+                tmp_src = channel_buffer[c];
                 ptr_x = (union av_intfloat32 *)ptr;
 
                 // Zero out the start if xmin is not 0
@@ -1395,20 +1398,20 @@ static int decode_block(AVCodecContext *avctx, void *tdata,
                     union av_intfloat32 t;
                     if (trc_func && c < 3) {
                         for (x = 0; x < xsize; x++) {
-                            t.i = bytestream_get_le32(&src);
+                            t.i = bytestream_get_le32(&tmp_src);
                             t.f = trc_func(t.f);
                             *ptr_x++ = t;
                         }
                     } else if (one_gamma != 1.f) {
                         for (x = 0; x < xsize; x++) {
-                            t.i = bytestream_get_le32(&src);
+                            t.i = bytestream_get_le32(&tmp_src);
                             if (t.f > 0.0f && c < 3)  /* avoid negative values */
                                 t.f = powf(t.f, one_gamma);
                             *ptr_x++ = t;
                         }
                     } else {
                         for (x = 0; x < xsize; x++) {
-                            t.i = bytestream_get_le32(&src);
+                            t.i = bytestream_get_le32(&tmp_src);
                             *ptr_x++ = t;
                         }
                     }
@@ -1416,11 +1419,11 @@ static int decode_block(AVCodecContext *avctx, void *tdata,
                     // 16-bit
                     if (c < 3 || !trc_func) {
                         for (x = 0; x < xsize; x++) {
-                            *ptr_x++ = s->gamma_table[bytestream_get_le16(&src)];
+                            *ptr_x++ = s->gamma_table[bytestream_get_le16(&tmp_src)];
                         }
                     } else {
                         for (x = 0; x < xsize; x++) {
-                            ptr_x[0].i = half2float(bytestream_get_le16(&src), &s->h2f_tables);
+                            ptr_x[0].i = half2float(bytestream_get_le16(&tmp_src), &s->h2f_tables);
                             ptr_x++;
                         }
                     }
@@ -2033,7 +2036,7 @@ static int decode_frame(AVCodecContext *avctx, AVFrame *picture,
     GetByteContext *gb = &s->gb;
     uint8_t *ptr;
 
-    int i, y, ret, ymax;
+    int y, ret, ymax;
     int planes;
     int out_line_size;
     int nb_blocks;   /* nb scanline or nb tile */
@@ -2191,7 +2194,7 @@ static int decode_frame(AVCodecContext *avctx, AVFrame *picture,
     s->buf_size = avpkt->size;
 
     // Zero out the start if ymin is not 0
-    for (i = 0; i < planes; i++) {
+    for (int i = 0; i < planes; i++) {
         ptr = picture->data[i];
         for (y = 0; y < FFMIN(s->ymin, s->h); y++) {
             memset(ptr, 0, out_line_size);
@@ -2206,7 +2209,7 @@ static int decode_frame(AVCodecContext *avctx, AVFrame *picture,
     ymax = FFMAX(0, s->ymax + 1);
     // Zero out the end if ymax+1 is not h
     if (ymax < avctx->height)
-        for (i = 0; i < planes; i++) {
+        for (int i = 0; i < planes; i++) {
             ptr = picture->data[i] + (ymax * picture->linesize[i]);
             for (y = ymax; y < avctx->height; y++) {
                 memset(ptr, 0, out_line_size);
