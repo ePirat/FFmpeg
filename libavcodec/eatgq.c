@@ -154,19 +154,19 @@ static void tgq_idct_put_mb_dconly(TgqContext *s, AVFrame *frame,
 static int tgq_decode_mb(TgqContext *s, GetByteContext *gbyte,
                          AVFrame *frame, int mb_y, int mb_x)
 {
-    int mode;
+    int ret, mode;
     int i;
     int8_t dc[6];
 
     mode = bytestream2_get_byte(gbyte);
     if (mode > 12) {
         GetBitContext gb;
-        int ret = init_get_bits8(&gb, gbyte->buffer, FFMIN(bytestream2_get_bytes_left(gbyte), mode));
+        ret = init_get_bits8(&gb, gbyte->buffer, FFMIN(bytestream2_get_bytes_left(gbyte), mode));
         if (ret < 0)
             return ret;
 
         for (i = 0; i < 6; i++) {
-            int ret = tgq_decode_block(s, s->block[i], &gb);
+            ret = tgq_decode_block(s, s->block[i], &gb);
             if (ret < 0)
                 return ret;
         }
