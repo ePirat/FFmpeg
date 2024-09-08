@@ -191,8 +191,6 @@ static int fic_decode_slice(AVCodecContext *avctx, void *tdata)
 
         for (y = 0; y < (slice_h >> !!p); y += 8) {
             for (x = 0; x < (ctx->aligned_width >> !!p); x += 8) {
-                int ret;
-
                 if ((ret = fic_decode_block(ctx, &gb, dst + x, stride,
                                             tctx->block, &tctx->p_frame)) != 0)
                     return ret;
