@@ -62,7 +62,7 @@ int64_t ff_vorbiscomment_length(const AVDictionary *m, const char *vendor_string
     return len;
 }
 
-int ff_vorbiscomment_write(AVIOContext *pb, const AVDictionary *m,
+int ff_vorbiscomment_write(AVIOContext *pb, const AVDictionary *meta,
                            const char *vendor_string,
                            AVChapter **chapters, unsigned int nb_chapters)
 {
@@ -75,11 +75,11 @@ int ff_vorbiscomment_write(AVIOContext *pb, const AVDictionary *m,
             cm_count += av_dict_count(chapters[i]->metadata) + 1;
         }
     }
-    if (m) {
-        int count = av_dict_count(m) + cm_count;
+    if (meta) {
+        int count = av_dict_count(meta) + cm_count;
         const AVDictionaryEntry *tag = NULL;
         avio_wl32(pb, count);
-        while ((tag = av_dict_iterate(m, tag))) {
+        while ((tag = av_dict_iterate(meta, tag))) {
             int64_t len1 = strlen(tag->key);
             int64_t len2 = strlen(tag->value);
             if (len1+1+len2 > UINT32_MAX)
