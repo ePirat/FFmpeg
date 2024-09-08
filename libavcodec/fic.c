@@ -113,25 +113,24 @@ static av_always_inline void fic_idct(int16_t *blk, int step, int shift, int rnd
 
 static void fic_idct_put(uint8_t *dst, int stride, int16_t *block)
 {
-    int i, j;
     int16_t *ptr;
 
     ptr = block;
     fic_idct(ptr++, 8, 13, (1 << 12) + (1 << 17));
-    for (i = 1; i < 8; i++) {
+    for (int i = 1; i < 8; i++) {
         fic_idct(ptr, 8, 13, 1 << 12);
         ptr++;
     }
 
     ptr = block;
-    for (i = 0; i < 8; i++) {
+    for (int i = 0; i < 8; i++) {
         fic_idct(ptr, 1, 20, 0);
         ptr += 8;
     }
 
     ptr = block;
-    for (j = 0; j < 8; j++) {
-        for (i = 0; i < 8; i++)
+    for (int j = 0; j < 8; j++) {
+        for (int i = 0; i < 8; i++)
             dst[i] = av_clip_uint8(ptr[i]);
         dst += stride;
         ptr += 8;
@@ -140,7 +139,7 @@ static void fic_idct_put(uint8_t *dst, int stride, int16_t *block)
 static int fic_decode_block(FICContext *ctx, GetBitContext *gb,
                             uint8_t *dst, int stride, int16_t *block, int *is_p)
 {
-    int i, num_coeff;
+    int num_coeff;
 
     if (get_bits_left(gb) < 8)
         return AVERROR_INVALIDDATA;
@@ -157,7 +156,7 @@ static int fic_decode_block(FICContext *ctx, GetBitContext *gb,
     if (num_coeff > 64)
         return AVERROR_INVALIDDATA;
 
-    for (i = 0; i < num_coeff; i++) {
+    for (int i = 0; i < num_coeff; i++) {
         int v = get_se_golomb(gb);
         if (v < -2048 || v > 2048)
              return AVERROR_INVALIDDATA;
@@ -179,18 +178,18 @@ static int fic_decode_slice(AVCodecContext *avctx, void *tdata)
     int slice_h  = tctx->slice_h;
     int src_size = tctx->src_size;
     int y_off    = tctx->y_off;
-    int x, y, p, ret;
+    int ret;
 
     ret = init_get_bits8(&gb, src, src_size);
     if (ret < 0)
         return ret;
 
-    for (p = 0; p < 3; p++) {
+    for (int p = 0; p < 3; p++) {
         int stride   = ctx->frame->linesize[p];
         uint8_t* dst = ctx->frame->data[p] + (y_off >> !!p) * stride;
 
-        for (y = 0; y < (slice_h >> !!p); y += 8) {
-            for (x = 0; x < (ctx->aligned_width >> !!p); x += 8) {
+        for (int y = 0; y < (slice_h >> !!p); y += 8) {
+            for (int x = 0; x < (ctx->aligned_width >> !!p); x += 8) {
                 if ((ret = fic_decode_block(ctx, &gb, dst + x, stride,
                                             tctx->block, &tctx->p_frame)) != 0)
                     return ret;
@@ -206,9 +205,7 @@ static int fic_decode_slice(AVCodecContext *avctx, void *tdata)
 static av_always_inline void fic_alpha_blend(uint8_t *dst, uint8_t *src,
                                              int size, uint8_t *alpha)
 {
-    int i;
-
-    for (i = 0; i < size; i++)
+    for (int i = 0; i < size; i++)
         dst[i] += ((src[i] - dst[i]) * alpha[i]) >> 8;
 }
 
@@ -219,10 +216,9 @@ static void fic_draw_cursor(AVCodecContext *avctx, int cur_x, int cur_y)
     uint8_t *dstptr[3];
     uint8_t planes[4][1024];
     uint8_t chroma[3][256];
-    int i, j, p;
 
     /* Convert to YUVA444. */
-    for (i = 0; i < 1024; i++) {
+    for (int i = 0; i < 1024; i++) {
         planes[0][i] = (( 25 * ptr[0] + 129 * ptr[1] +  66 * ptr[2]) / 255) + 16;
         planes[1][i] = ((-38 * ptr[0] + 112 * ptr[1] + -74 * ptr[2]) / 255) + 128;
         planes[2][i] = ((-18 * ptr[0] + 112 * ptr[1] + -94 * ptr[2]) / 255) + 128;
@@ -232,22 +228,22 @@ static void fic_draw_cursor(AVCodecContext *avctx, int cur_x, int cur_y)
     }
 
     /* Subsample chroma. */
-    for (i = 0; i < 32; i += 2)
-        for (j = 0; j < 32; j += 2)
-            for (p = 0; p < 3; p++)
+    for (int i = 0; i < 32; i += 2)
+        for (int j = 0; j < 32; j += 2)
+            for (int p = 0; p < 3; p++)
                 chroma[p][16 * (i / 2) + j / 2] = (planes[p + 1][32 *  i      + j    ] +
                                                    planes[p + 1][32 *  i      + j + 1] +
                                                    planes[p + 1][32 * (i + 1) + j    ] +
                                                    planes[p + 1][32 * (i + 1) + j + 1]) / 4;
 
     /* Seek to x/y pos of cursor. */
-    for (i = 0; i < 3; i++)
+    for (int i = 0; i < 3; i++)
         dstptr[i] = ctx->final_frame->data[i]                        +
                     (ctx->final_frame->linesize[i] * (cur_y >> !!i)) +
                     (cur_x >> !!i) + !!i;
 
     /* Copy. */
-    for (i = 0; i < FFMIN(32, avctx->height - cur_y) - 1; i += 2) {
+    for (int i = 0; i < FFMIN(32, avctx->height - cur_y) - 1; i += 2) {
         int lsize = FFMIN(32, avctx->width - cur_x);
         int csize = lsize / 2;
 
@@ -272,7 +268,7 @@ static int fic_decode_frame(AVCodecContext *avctx, AVFrame *rframe,
     FICContext *ctx = avctx->priv_data;
     const uint8_t *src = avpkt->data;
     int ret;
-    int slice, nslices;
+    int nslices;
     int msize;
     int tsize;
     int cur_x, cur_y;
@@ -371,7 +367,7 @@ static int fic_decode_frame(AVCodecContext *avctx, AVFrame *rframe,
     }
     memset(ctx->slice_data, 0, nslices * sizeof(ctx->slice_data[0]));
 
-    for (slice = 0; slice < nslices; slice++) {
+    for (int slice = 0; slice < nslices; slice++) {
         unsigned slice_off = AV_RB32(src + tsize + FIC_HEADER_SIZE + slice * 4);
         unsigned slice_size;
         int y_off   = ctx->slice_h * slice;
@@ -407,7 +403,7 @@ static int fic_decode_frame(AVCodecContext *avctx, AVFrame *rframe,
 
     ctx->frame->flags |= AV_FRAME_FLAG_KEY;
     ctx->frame->pict_type = AV_PICTURE_TYPE_I;
-    for (slice = 0; slice < nslices; slice++) {
+    for (int slice = 0; slice < nslices; slice++) {
         if (ctx->slice_data[slice].p_frame) {
             ctx->frame->flags &= ~AV_FRAME_FLAG_KEY;
             ctx->frame->pict_type = AV_PICTURE_TYPE_P;
