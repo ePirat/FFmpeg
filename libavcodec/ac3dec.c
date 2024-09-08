@@ -1492,7 +1492,7 @@ static int ac3_decode_frame(AVCodecContext *avctx, AVFrame *frame,
     int buf_size, full_buf_size = avpkt->size;
     AC3DecodeContext *s = avctx->priv_data;
     int blk, ch, err, offset, ret;
-    int i;
+    int sync_offset;
     int skip = 0, got_independent_frame = 0;
     const uint8_t *channel_map;
     uint8_t extended_channel_map[EAC3_MAX_CHANNELS];
@@ -1504,11 +1504,11 @@ static int ac3_decode_frame(AVCodecContext *avctx, AVFrame *frame,
     s->superframe_size = 0;
 
     buf_size = full_buf_size;
-    i = ff_ac3_find_syncword(buf, buf_size);
-    if (i < 0 || i > 10)
-        return i;
-    buf += i;
-    buf_size -= i;
+    sync_offset = ff_ac3_find_syncword(buf, buf_size);
+    if (sync_offset < 0 || sync_offset > 10)
+        return sync_offset;
+    buf += sync_offset;
+    buf_size -= sync_offset;
 
     /* copy input buffer to decoder context to avoid reading past the end
        of the buffer, which can be caused by a damaged input stream. */
@@ -1670,7 +1670,6 @@ dependent_frame:
     /* check if there is dependent frame */
     if (buf_size > s->frame_size) {
         AC3HeaderInfo hdr;
-        int err;
 
         if (buf_size - s->frame_size <= 16) {
             skip = buf_size - s->frame_size;
@@ -1680,8 +1679,7 @@ dependent_frame:
         if ((ret = init_get_bits8(&s->gbc, buf + s->frame_size, buf_size - s->frame_size)) < 0)
             return ret;
 
-        err = ff_ac3_parse_header(&s->gbc, &hdr);
-        if (err)
+        if ((err = ff_ac3_parse_header(&s->gbc, &hdr)))
             return err;
 
         if (hdr.frame_type == EAC3_FRAME_TYPE_DEPENDENT) {
@@ -1752,9 +1750,7 @@ skip:
 
                     extended_channel_map[index] = offset + channel_map[extend++];
                 } else {
-                    int i;
-
-                    for (i = 0; i < 64; i++) {
+                    for (int i = 0; i < 64; i++) {
                         if ((1ULL << i) & ff_eac3_custom_channel_map_locations[ch][1]) {
                             int index = av_channel_layout_index_from_channel(&avctx->ch_layout, i);
                             if (index < 0)
