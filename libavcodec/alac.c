@@ -331,7 +331,7 @@ static int decode_element(AVCodecContext *avctx, AVFrame *frame, int ch_index,
             }
         }
         for (ch = 0; ch < channels; ch++) {
-            int ret = rice_decompress(alac, alac->predict_error_buffer[ch],
+            ret = rice_decompress(alac, alac->predict_error_buffer[ch],
                             alac->nb_samples, bps,
                             rice_history_mult[ch] * alac->rice_history_mult / 4);
             if (ret < 0)
