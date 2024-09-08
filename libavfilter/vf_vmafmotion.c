@@ -67,10 +67,9 @@ static uint64_t image_sad(const uint16_t *img1, const uint16_t *img2, int w,
     ptrdiff_t img1_stride = _img1_stride / sizeof(*img1);
     ptrdiff_t img2_stride = _img2_stride / sizeof(*img2);
     uint64_t sum = 0;
-    int i, j;
 
-    for (i = 0; i < h; i++) {
-        for (j = 0; j < w; j++) {
+    for (int i = 0; i < h; i++) {
+        for (int j = 0; j < w; j++) {
             sum += abs(img1[j] - img2[j]);
         }
         img1 += img1_stride;
@@ -89,12 +88,11 @@ static void convolution_x(const uint16_t *filter, int filt_w, const uint16_t *sr
     int radius = filt_w / 2;
     int borders_left = radius;
     int borders_right = w - (filt_w - radius);
-    int i, j, k;
 
-    for (i = 0; i < h; i++) {
-        for (j = 0; j < borders_left; j++) {
+    for (int i = 0; i < h; i++) {
+        for (int j = 0; j < borders_left; j++) {
             int sum = 0;
-            for (k = 0; k < filt_w; k++) {
+            for (int k = 0; k < filt_w; k++) {
                 int j_tap = FFABS(j - radius + k);
                 if (j_tap >= w) {
                     j_tap = w - (j_tap - w + 1);
@@ -104,17 +102,17 @@ static void convolution_x(const uint16_t *filter, int filt_w, const uint16_t *sr
             dst[i * dst_stride + j] = sum >> BIT_SHIFT;
         }
 
-        for (j = borders_left; j < borders_right; j++) {
+        for (int j = borders_left; j < borders_right; j++) {
             int sum = 0;
-            for (k = 0; k < filt_w; k++) {
+            for (int k = 0; k < filt_w; k++) {
                 sum += filter[k] * src[i * src_stride + j - radius + k];
             }
             dst[i * dst_stride + j] = sum >> BIT_SHIFT;
         }
 
-        for (j = borders_right; j < w; j++) {
+        for (int j = borders_right; j < w; j++) {
             int sum = 0;
-            for (k = 0; k < filt_w; k++) {
+            for (int k = 0; k < filt_w; k++) {
                 int j_tap = FFABS(j - radius + k);
                 if (j_tap >= w) {
                     j_tap = w - (j_tap - w + 1);
@@ -138,13 +136,11 @@ static void convolution_y_##bits##bit(const uint16_t *filter, int filt_w, \
     int radius = filt_w / 2; \
     int borders_top = radius; \
     int borders_bottom = h - (filt_w - radius); \
-    int i, j, k; \
-    int sum = 0; \
     \
-    for (i = 0; i < borders_top; i++) { \
-        for (j = 0; j < w; j++) { \
-            sum = 0; \
-            for (k = 0; k < filt_w; k++) { \
+    for (int i = 0; i < borders_top; i++) { \
+        for (int j = 0; j < w; j++) { \
+            int sum = 0; \
+            for (int k = 0; k < filt_w; k++) { \
                 int i_tap = FFABS(i - radius + k); \
                 if (i_tap >= h) { \
                     i_tap = h - (i_tap - h + 1); \
@@ -154,19 +150,19 @@ static void convolution_y_##bits##bit(const uint16_t *filter, int filt_w, \
             dst[i * dst_stride + j] = sum >> bits; \
         } \
     } \
-    for (i = borders_top; i < borders_bottom; i++) { \
-        for (j = 0; j < w; j++) { \
-            sum = 0; \
-            for (k = 0; k < filt_w; k++) { \
+    for (int i = borders_top; i < borders_bottom; i++) { \
+        for (int j = 0; j < w; j++) { \
+            int sum = 0; \
+            for (int k = 0; k < filt_w; k++) { \
                 sum += filter[k] * src[(i - radius + k) * src_stride + j]; \
             } \
             dst[i * dst_stride + j] = sum >> bits; \
         } \
     } \
-    for (i = borders_bottom; i < h; i++) { \
-        for (j = 0; j < w; j++) { \
-            sum = 0; \
-            for (k = 0; k < filt_w; k++) { \
+    for (int i = borders_bottom; i < h; i++) { \
+        for (int j = 0; j < w; j++) { \
+            int sum = 0; \
+            for (int k = 0; k < filt_w; k++) { \
                 int i_tap = FFABS(i - radius + k); \
                 if (i_tap >= h) { \
                     i_tap = h - (i_tap - h + 1); \
@@ -237,7 +233,6 @@ int ff_vmafmotion_init(VMAFMotionData *s,
                        int w, int h, enum AVPixelFormat fmt)
 {
     size_t data_sz;
-    int i;
     const AVPixFmtDescriptor *desc = av_pix_fmt_desc_get(fmt);
 
     if (w < 3 || h < 3)
@@ -254,7 +249,7 @@ int ff_vmafmotion_init(VMAFMotionData *s,
         return AVERROR(ENOMEM);
     }
 
-    for (i = 0; i < 5; i++) {
+    for (int i = 0; i < 5; i++) {
         s->filter[i] = lrint(FILTER_5[i] * (1 << BIT_SHIFT));
     }
 
@@ -266,9 +261,9 @@ int ff_vmafmotion_init(VMAFMotionData *s,
 static int query_formats(AVFilterContext *ctx)
 {
     AVFilterFormats *fmts_list = NULL;
-    int format, ret;
+    int ret;
 
-    for (format = 0; av_pix_fmt_desc_get(format); format++) {
+    for (int format = 0; av_pix_fmt_desc_get(format); format++) {
         const AVPixFmtDescriptor *desc = av_pix_fmt_desc_get(format);
         if (!(desc->flags & (AV_PIX_FMT_FLAG_RGB | AV_PIX_FMT_FLAG_HWACCEL | AV_PIX_FMT_FLAG_BITSTREAM | AV_PIX_FMT_FLAG_PAL)) &&
             (desc->flags & AV_PIX_FMT_FLAG_PLANAR || desc->nb_components == 1) &&
