@@ -382,11 +382,11 @@ static int write_adaptation_set(AVFormatContext *s, int as_index)
 
     for (i = 0; i < as->nb_streams; i++) {
         char buf[25], *representation_id = buf, *underscore_pos, *period_pos;
-        AVStream *st = s->streams[as->streams[i]];
+        AVStream *tmp_st = s->streams[as->streams[i]];
         int ret;
         if (w->is_live) {
             AVDictionaryEntry *filename =
-                av_dict_get(st->metadata, FILENAME, NULL, 0);
+                av_dict_get(tmp_st->metadata, FILENAME, NULL, 0);
             if (!filename)
                 return AVERROR(EINVAL);
             ret = split_filename(filename->value, &underscore_pos, &period_pos);
@@ -397,7 +397,7 @@ static int write_adaptation_set(AVFormatContext *s, int as_index)
         } else {
             snprintf(buf, sizeof(buf), "%d", w->representation_id++);
         }
-        ret = write_representation(s, st, representation_id, !width_in_as,
+        ret = write_representation(s, tmp_st, representation_id, !width_in_as,
                                    !height_in_as, !sample_rate_in_as);
         if (ret) return ret;
         if (w->is_live)
@@ -477,7 +477,6 @@ static int parse_adaptation_sets(AVFormatContext *s)
 
 static int webm_dash_manifest_write_header(AVFormatContext *s)
 {
-    int i;
     double start = 0.0;
     int ret;
     WebMDashMuxContext *w = s->priv_data;
@@ -505,7 +504,7 @@ static int webm_dash_manifest_write_header(AVFormatContext *s)
     }
     avio_printf(s->pb, " >\n");
 
-    for (i = 0; i < w->nb_as; i++) {
+    for (int i = 0; i < w->nb_as; i++) {
         ret = write_adaptation_set(s, i);
         if (ret < 0) {
             goto fail;
