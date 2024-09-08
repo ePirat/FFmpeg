@@ -74,8 +74,8 @@ typedef struct ELBGContext {
 
 static inline int distance_limited(int *a, int *b, int dim, int limit)
 {
-    int i, dist=0;
-    for (i=0; i<dim; i++) {
+    int dist=0;
+    for (int i = 0; i < dim; i++) {
         int64_t distance = a[i] - b[i];
 
         distance *= distance;
@@ -89,9 +89,8 @@ static inline int distance_limited(int *a, int *b, int dim, int limit)
 
 static inline void vect_division(int *res, int *vect, int div, int dim)
 {
-    int i;
     if (div > 1)
-        for (i=0; i<dim; i++)
+        for (int i = 0; i < dim; i++)
             res[i] = ROUNDED_DIV(vect[i],div);
     else if (res != vect)
         memcpy(res, vect, dim*sizeof(int));
@@ -158,7 +157,6 @@ static int simple_lbg(ELBGContext *elbg,
                       int *points,
                       cell *cells)
 {
-    int i;
     int numpoints[2] = {0,0};
     int *newcentroid[2] = {
         elbg->scratchbuf + 3*dim,
@@ -175,7 +173,7 @@ static int simple_lbg(ELBGContext *elbg,
         int idx = distance_limited(centroid[0], points + tempcell->index*dim, dim, INT_MAX)>=
               distance_limited(centroid[1], points + tempcell->index*dim, dim, INT_MAX);
         numpoints[idx]++;
-        for (i=0; i<dim; i++)
+        for (int i = 0; i < dim; i++)
             newcentroid[idx][i] += points[tempcell->index*dim + i];
     }
 
@@ -201,20 +199,19 @@ static void get_new_centroids(ELBGContext *elbg, int huc, int *newcentroid_i,
     cell *tempcell;
     int *min = newcentroid_i;
     int *max = newcentroid_p;
-    int i;
 
-    for (i=0; i< elbg->dim; i++) {
+    for (int i = 0; i < elbg->dim; i++) {
         min[i]=INT_MAX;
         max[i]=0;
     }
 
     for (tempcell = elbg->cells[huc]; tempcell; tempcell = tempcell->next)
-        for(i=0; i<elbg->dim; i++) {
+        for(int i = 0; i < elbg->dim; i++) {
             min[i]=FFMIN(min[i], elbg->points[tempcell->index*elbg->dim + i]);
             max[i]=FFMAX(max[i], elbg->points[tempcell->index*elbg->dim + i]);
         }
 
-    for (i=0; i<elbg->dim; i++) {
+    for (int i = 0; i < elbg->dim; i++) {
         int ni = min[i] + (max[i] - min[i])/3;
         int np = min[i] + (2*(max[i] - min[i]))/3;
         newcentroid_i[i] = ni;
@@ -289,7 +286,7 @@ static void update_utility_and_n_cb(ELBGContext *elbg, int idx, int newutility)
  */
 static void try_shift_candidate(ELBGContext *elbg, int idx[3])
 {
-    int j, k, cont=0, tmp;
+    int cont=0, tmp;
     int64_t olderror=0, newerror;
     int newutility[3];
     int *newcentroid[3] = {
@@ -299,15 +296,15 @@ static void try_shift_candidate(ELBGContext *elbg, int idx[3])
     };
     cell *tempcell;
 
-    for (j=0; j<3; j++)
+    for (int j = 0; j < 3; j++)
         olderror += elbg->utility[idx[j]];
 
     memset(newcentroid[2], 0, elbg->dim*sizeof(int));
 
-    for (k=0; k<2; k++)
+    for (int k = 0; k < 2; k++)
         for (tempcell=elbg->cells[idx[2*k]]; tempcell; tempcell=tempcell->next) {
             cont++;
-            for (j=0; j<elbg->dim; j++)
+            for (int j = 0; j < elbg->dim; j++)
                 newcentroid[2][j] += elbg->points[tempcell->index*elbg->dim + j];
         }
 
@@ -333,7 +330,7 @@ static void try_shift_candidate(ELBGContext *elbg, int idx[3])
 
         elbg->error += newerror - olderror;
 
-        for (j=0; j<3; j++)
+        for (int j = 0; j < 3; j++)
             update_utility_and_n_cb(elbg, idx[j], newutility[j]);
 
         evaluate_utility_inc(elbg);
@@ -366,7 +363,7 @@ static void do_elbg(ELBGContext *restrict elbg, int *points, int numpoints,
                     int max_steps)
 {
     int *const size_part = elbg->size_part;
-    int j, steps = 0;
+    int steps = 0;
     int best_idx = 0;
     int last_error;
 
@@ -415,7 +412,7 @@ static void do_elbg(ELBGContext *restrict elbg, int *points, int numpoints,
 
         for (int i = 0; i < numpoints; i++) {
             size_part[elbg->nearest_cb[i]]++;
-            for (j=0; j < elbg->dim; j++)
+            for (int j = 0; j < elbg->dim; j++)
                 elbg->codebook[elbg->nearest_cb[i]*elbg->dim + j] +=
                     elbg->points[i*elbg->dim + j];
         }
