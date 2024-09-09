@@ -224,7 +224,7 @@ static int write_packet(AVFormatContext *s, AVPacket *pkt)
         goto fail;
 
     for (i = 0; i < nb_renames; i++) {
-        int ret = ff_rename(img->tmp[i], img->target[i], s);
+        ret = ff_rename(img->tmp[i], img->target[i], s);
         if (ret < 0)
             return ret;
     }
