@@ -1487,7 +1487,7 @@ static int dvbsub_decode(AVCodecContext *avctx, AVSubtitle *sub,
 
         if (p_end - p < segment_length) {
             ff_dlog(avctx, "incomplete or broken packet");
-            ret = -1;
+            ret = AVERROR_INVALIDDATA;
             goto end;
         }
 
