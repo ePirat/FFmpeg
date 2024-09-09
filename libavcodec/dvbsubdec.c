@@ -1493,7 +1493,6 @@ static int dvbsub_decode(AVCodecContext *avctx, AVSubtitle *sub,
 
         if (page_id == ctx->composition_id || page_id == ctx->ancillary_id ||
             ctx->composition_id == -1 || ctx->ancillary_id == -1) {
-            int ret = 0;
             switch (segment_type) {
             case DVBSUB_PAGE_SEGMENT:
                 ret = dvbsub_parse_page_segment(avctx, p, segment_length, sub, got_sub_ptr);
@@ -1505,7 +1504,6 @@ static int dvbsub_decode(AVCodecContext *avctx, AVSubtitle *sub,
                 break;
             case DVBSUB_CLUT_SEGMENT:
                 ret = dvbsub_parse_clut_segment(avctx, p, segment_length);
-                if (ret < 0) goto end;
                 got_segment |= 4;
                 break;
             case DVBSUB_OBJECT_SEGMENT:
