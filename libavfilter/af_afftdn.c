@@ -633,7 +633,7 @@ static int config_input(AVFilterLink *inlink)
     AVFilterContext *ctx = inlink->dst;
     AudioFFTDeNoiseContext *s = ctx->priv;
     double wscale, sar, sum, sdiv;
-    int i, j, k, m, n, ret, tx_type;
+    int ret, tx_type;
     double dscale = 1.;
     float fscale = 1.f;
     void *scale;
@@ -669,7 +669,7 @@ static int config_input(AVFilterLink *inlink)
     s->bin_count = s->fft_length2 / 2 + 1;
 
     s->band_centre[0] = 80;
-    for (i = 1; i < NB_PROFILE_BANDS; i++) {
+    for (int i = 1; i < NB_PROFILE_BANDS; i++) {
         s->band_centre[i] = lrint(1.5 * s->band_centre[i - 1] + 5.0);
         if (s->band_centre[i] < 1000) {
             s->band_centre[i] = 10 * (s->band_centre[i] / 10);
@@ -682,24 +682,22 @@ static int config_input(AVFilterLink *inlink)
         }
     }
 
-    for (j = 0; j < SOLVE_SIZE; j++) {
-        for (k = 0; k < SOLVE_SIZE; k++) {
+    for (int j = 0; j < SOLVE_SIZE; j++) {
+        for (int k = 0; k < SOLVE_SIZE; k++) {
             s->matrix_a[j + k * SOLVE_SIZE] = 0.0;
-            for (m = 0; m < NB_PROFILE_BANDS; m++)
+            for (int m = 0; m < NB_PROFILE_BANDS; m++)
                 s->matrix_a[j + k * SOLVE_SIZE] += pow(m, j + k);
         }
     }
 
     factor(s->matrix_a, SOLVE_SIZE);
 
-    i = 0;
-    for (j = 0; j < SOLVE_SIZE; j++)
-        for (k = 0; k < NB_PROFILE_BANDS; k++)
+    for (int i = 0, j = 0; j < SOLVE_SIZE; j++)
+        for (int k = 0; k < NB_PROFILE_BANDS; k++)
             s->matrix_b[i++] = pow(k, j);
 
-    i = 0;
-    for (j = 0; j < NB_PROFILE_BANDS; j++)
-        for (k = 0; k < SOLVE_SIZE; k++)
+    for (int i = 0, j = 0; j < NB_PROFILE_BANDS; j++)
+        for (int k = 0; k < SOLVE_SIZE; k++)
             s->matrix_c[i++] = pow(j, k);
 
     s->window = av_calloc(s->window_length, sizeof(*s->window));
@@ -708,7 +706,7 @@ static int config_input(AVFilterLink *inlink)
         return AVERROR(ENOMEM);
 
     sdiv = s->band_multiplier;
-    for (i = 0; i < s->bin_count; i++)
+    for (int i = 0; i < s->bin_count; i++)
         s->bin2band[i] = lrint(sdiv * freq2bark((0.5 * i * s->sample_rate) / s->fft_length2));
 
     s->number_of_bands = s->bin2band[s->bin_count - 1] + 1;
@@ -723,15 +721,15 @@ static int config_input(AVFilterLink *inlink)
 
         switch (s->noise_type) {
         case WHITE_NOISE:
-            for (i = 0; i < NB_PROFILE_BANDS; i++)
+            for (int i = 0; i < NB_PROFILE_BANDS; i++)
                 dnch->band_noise[i] = 0.;
             break;
         case VINYL_NOISE:
-            for (i = 0; i < NB_PROFILE_BANDS; i++)
+            for (int i = 0; i < NB_PROFILE_BANDS; i++)
                 dnch->band_noise[i] = get_band_noise(s, i, 50.0, 500.5, 2125.0);
             break;
         case SHELLAC_NOISE:
-            for (i = 0; i < NB_PROFILE_BANDS; i++)
+            for (int i = 0; i < NB_PROFILE_BANDS; i++)
                 dnch->band_noise[i] = get_band_noise(s, i, 1.0, 500.0, 1.0E10);
             break;
         case CUSTOM_NOISE:
@@ -796,9 +794,9 @@ static int config_input(AVFilterLink *inlink)
 
         p1 = pow(0.1, 2.5 / sdiv);
         p2 = pow(0.1, 1.0 / sdiv);
-        j = 0;
-        for (m = 0; m < s->number_of_bands; m++) {
-            for (n = 0; n < s->number_of_bands; n++) {
+
+        for (int j = 0, m = 0; m < s->number_of_bands; m++) {
+            for (int n = 0; n < s->number_of_bands; n++) {
                 if (n < m) {
                     dnch->spread_function[j++] = pow(p2, m - n);
                 } else if (n > m) {
@@ -809,17 +807,16 @@ static int config_input(AVFilterLink *inlink)
             }
         }
 
-        for (m = 0; m < s->number_of_bands; m++) {
+        for (int m = 0; m < s->number_of_bands; m++) {
             dnch->band_excit[m] = 0.0;
             prior_band_excit[m] = 0.0;
         }
 
-        for (m = 0; m < s->bin_count; m++)
+        for (int m = 0; m < s->bin_count; m++)
             dnch->band_excit[s->bin2band[m]] += 1.0;
 
-        j = 0;
-        for (m = 0; m < s->number_of_bands; m++) {
-            for (n = 0; n < s->number_of_bands; n++)
+        for (int j = 0, m = 0; m < s->number_of_bands; m++) {
+            for (int n = 0; n < s->number_of_bands; n++)
                 prior_band_excit[m] += dnch->spread_function[j++] * dnch->band_excit[n];
         }
 
@@ -837,15 +834,13 @@ static int config_input(AVFilterLink *inlink)
         for (int i = 0; i < s->buffer_length; i++)
             dnch->out_samples[i] = 0;
 
-        j = 0;
-        for (int i = 0; i < s->number_of_bands; i++)
+        for (int j = 0, i = 0; i < s->number_of_bands; i++)
             for (int k = 0; k < s->number_of_bands; k++)
                 dnch->spread_function[j++] *= dnch->band_excit[i] / prior_band_excit[i];
     }
 
-    j = 0;
     sar = s->sample_advance / s->sample_rate;
-    for (int i = 0; i < s->bin_count; i++) {
+    for (int j = 0, i = 0; i < s->bin_count; i++) {
         if ((i == s->fft_length2) || (s->bin2band[i] > j)) {
             double d6 = (i - 1) * s->sample_rate / s->fft_length;
             double d7 = fmin(0.008 + 2.2 / d6, 0.03);
@@ -883,8 +878,7 @@ static int config_input(AVFilterLink *inlink)
     }
 
     s->noise_band_edge[0] = FFMIN(s->fft_length2, s->fft_length * get_band_edge(s, 0) / s->sample_rate);
-    i = 0;
-    for (int j = 1; j < NB_PROFILE_BANDS + 1; j++) {
+    for (int i = 0, j = 1; j < NB_PROFILE_BANDS + 1; j++) {
         s->noise_band_edge[j] = FFMIN(s->fft_length2, s->fft_length * get_band_edge(s, j) / s->sample_rate);
         if (s->noise_band_edge[j] > lrint(1.1 * s->noise_band_edge[j - 1]))
             i++;
