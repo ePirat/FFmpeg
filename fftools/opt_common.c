@@ -1211,7 +1211,7 @@ int init_report(const char *env, FILE **file)
 
     report_file = fopen(filename.str, "w");
     if (!report_file) {
-        int ret = AVERROR(errno);
+        ret = AVERROR(errno);
         av_log(NULL, AV_LOG_ERROR, "Failed to open report \"%s\": %s\n",
                filename.str, strerror(errno));
         return ret;
