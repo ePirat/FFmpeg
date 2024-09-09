@@ -432,9 +432,9 @@ static inline void ff_outlink_set_status(AVFilterLink *link, int status, int64_t
  * will return immediately.
  */
 #define FF_FILTER_FORWARD_STATUS_BACK(outlink, inlink) do { \
-    int ret = ff_outlink_get_status(outlink); \
-    if (ret) { \
-        ff_inlink_set_status(inlink, ret); \
+    int ff_filter_ret = ff_outlink_get_status(outlink); \
+    if (ff_filter_ret) { \
+        ff_inlink_set_status(inlink, ff_filter_ret); \
         return 0; \
     } \
 } while (0)
@@ -445,11 +445,10 @@ static inline void ff_outlink_set_status(AVFilterLink *link, int status, int64_t
  * will return immediately.
  */
 #define FF_FILTER_FORWARD_STATUS_BACK_ALL(outlink, filter) do { \
-    int ret = ff_outlink_get_status(outlink); \
-    if (ret) { \
-        unsigned i; \
-        for (i = 0; i < filter->nb_inputs; i++) \
-            ff_inlink_set_status(filter->inputs[i], ret); \
+    int ff_filter_ret = ff_outlink_get_status(outlink); \
+    if (ff_filter_ret) { \
+        for (unsigned ff_filter_idx = 0; ff_filter_idx < filter->nb_inputs; ff_filter_idx++) \
+            ff_inlink_set_status(filter->inputs[ff_filter_idx], ff_filter_ret); \
         return 0; \
     } \
 } while (0)
@@ -459,10 +458,10 @@ static inline void ff_outlink_set_status(AVFilterLink *link, int status, int64_t
  * If the status is set, this macro will return immediately.
  */
 #define FF_FILTER_FORWARD_STATUS(inlink, outlink) do { \
-    int status; \
-    int64_t pts; \
-    if (ff_inlink_acknowledge_status(inlink, &status, &pts)) { \
-        ff_outlink_set_status(outlink, status, pts); \
+    int ff_filter_status; \
+    int64_t ff_filter_pts; \
+    if (ff_inlink_acknowledge_status(inlink, &ff_filter_status, &ff_filter_pts)) { \
+        ff_outlink_set_status(outlink, ff_filter_status, ff_filter_pts); \
         return 0; \
     } \
 } while (0)
@@ -472,12 +471,11 @@ static inline void ff_outlink_set_status(AVFilterLink *link, int status, int64_t
  * If the status is set, this macro will return immediately.
  */
 #define FF_FILTER_FORWARD_STATUS_ALL(inlink, filter) do { \
-    int status; \
-    int64_t pts; \
-    if (ff_inlink_acknowledge_status(inlink, &status, &pts)) { \
-        unsigned i; \
-        for (i = 0; i < filter->nb_outputs; i++) \
-            ff_outlink_set_status(filter->outputs[i], status, pts); \
+    int ff_filter_status; \
+    int64_t ff_filter_pts; \
+    if (ff_inlink_acknowledge_status(inlink, &ff_filter_status, &ff_filter_pts)) { \
+        for (unsigned ff_filter_idx = 0; ff_filter_idx < filter->nb_outputs; ff_filter_idx++) \
+            ff_outlink_set_status(filter->outputs[ff_filter_idx], ff_filter_status, ff_filter_pts); \
         return 0; \
     } \
 } while (0)
