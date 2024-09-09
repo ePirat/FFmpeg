@@ -156,7 +156,6 @@ int ff_draw_init(FFDrawContext *draw, enum AVPixelFormat format, unsigned flags)
 
 void ff_draw_color(FFDrawContext *draw, FFDrawColor *color, const uint8_t rgba[4])
 {
-    unsigned i;
     double yuvad[4];
     double rgbad[4];
     const AVPixFmtDescriptor *desc = draw->desc;
@@ -190,7 +189,7 @@ void ff_draw_color(FFDrawContext *draw, FFDrawColor *color, const uint8_t rgba[4
     if (desc->nb_components <= 2)
         yuvad[1] = yuvad[3];
 
-    for (i = 0; i < desc->nb_components; i++) {
+    for (unsigned i = 0; i < desc->nb_components; i++) {
         unsigned val = yuvad[i] * ((1 << (draw->desc->comp[i].depth + draw->desc->comp[i].shift)) - 1) + 0.5;
         if (desc->comp[i].depth > 8)
             color->comp[desc->comp[i].plane].u16[desc->comp[i].offset / 2] = val;
