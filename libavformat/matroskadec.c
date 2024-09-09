@@ -1281,8 +1281,8 @@ static int ebml_parse(MatroskaDemuxContext *matroska,
     MatroskaLevel *level = matroska->num_levels ? &matroska->levels[matroska->num_levels - 1] : NULL;
 
     if (!matroska->current_id) {
-        uint64_t id;
-        res = ebml_read_num(matroska, pb, 4, &id, 0);
+        uint64_t tmp_id;
+        res = ebml_read_num(matroska, pb, 4, &tmp_id, 0);
         if (res < 0) {
             if (pb->eof_reached && res == AVERROR_EOF) {
                 if (matroska->is_live)
@@ -1301,7 +1301,7 @@ static int ebml_parse(MatroskaDemuxContext *matroska,
             }
             return res;
         }
-        matroska->current_id = id | 1 << 7 * res;
+        matroska->current_id = tmp_id | 1 << 7 * res;
         pos_alt = pos + res;
     } else {
         pos_alt = pos;
@@ -3039,7 +3039,7 @@ static int mkv_parse_video(MatroskaTrack *track, AVStream *st,
     if (track->video.stereo_mode < MATROSKA_VIDEO_STEREOMODE_TYPE_NB &&
         track->video.stereo_mode != MATROSKA_VIDEO_STEREOMODE_TYPE_ANAGLYPH_CYAN_RED &&
         track->video.stereo_mode != MATROSKA_VIDEO_STEREOMODE_TYPE_ANAGLYPH_GREEN_MAG) {
-        int ret = mkv_stereo3d_conv(st, track->video.stereo_mode);
+        ret = mkv_stereo3d_conv(st, track->video.stereo_mode);
         if (ret < 0)
             return ret;
     }
@@ -4740,7 +4740,7 @@ static int webm_dash_manifest_cues(AVFormatContext *s, int64_t init_range)
     // Store cue point timestamps as a comma separated list
     // for checking subsegment alignment in the muxer.
     av_bprint_init(&bprint, 0, AV_BPRINT_SIZE_UNLIMITED);
-    for (int i = 0; i < sti->nb_index_entries; i++)
+    for (i = 0; i < sti->nb_index_entries; i++)
         av_bprintf(&bprint, "%" PRId64",", sti->index_entries[i].timestamp);
     if (!av_bprint_is_complete(&bprint)) {
         av_bprint_finalize(&bprint, NULL);
