@@ -215,9 +215,10 @@ int ff_opencl_filter_load_program_from_file(AVFilterContext *avctx,
 
     file = avpriv_fopen_utf8(filename, "r");
     if (!file) {
+        err = AVERROR(errno);
         av_log(avctx, AV_LOG_ERROR, "Unable to open program "
-               "source file \"%s\".\n", filename);
-        return AVERROR(ENOENT);
+               "source file \"%s\": %s\n", filename, av_err2str(err));
+        return err;
     }
 
     len = 1 << 16;
