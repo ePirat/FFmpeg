@@ -790,6 +790,7 @@ static inline void writer_print_section_header(WriterContext *wctx,
     int parent_section_id;
     wctx->level++;
     av_assert0(wctx->level < SECTION_MAX_NB_LEVELS);
+    av_assert0(section_id < wctx->nb_sections);
     parent_section_id = wctx->level ?
         (wctx->section[wctx->level-1])->id : SECTION_ID_NONE;
 
@@ -3573,9 +3574,11 @@ static void print_iamf_param_definition(WriterContext *w, const char *name,
                                         const AVIAMFParamDefinition *param, SectionID section_id)
 {
     SectionID subsection_id, parameter_section_id;
-    subsection_id = ffprobe_sections[section_id].children_ids[0];
+    subsection_id = w->sections[section_id].children_ids[0];
+    av_assert0(section_id < w->nb_sections);
     av_assert0(subsection_id != -1);
-    parameter_section_id = ffprobe_sections[subsection_id].children_ids[0];
+    parameter_section_id = w->sections[subsection_id].children_ids[0];
+    av_assert0(subsection_id < w->nb_sections);
     av_assert0(parameter_section_id != -1);
     writer_print_section_header(w, "IAMF Param Definition", section_id);
     print_str("name",           name);
