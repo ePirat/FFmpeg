@@ -182,7 +182,7 @@ static int filter_frame(AVFilterLink *inlink, AVFrame *in)
         return AVERROR_EXTERNAL;
     } else {
         if (vsWriteToFile(md, s->f, &localmotions) != VS_OK) {
-            int ret = AVERROR(errno);
+            ret = AVERROR(errno);
             av_log(ctx, AV_LOG_ERROR, "cannot write to transform file");
             return ret;
         }
