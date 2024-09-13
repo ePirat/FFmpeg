@@ -467,13 +467,13 @@ FF_ENABLE_DEPRECATION_WARNINGS
                 ctx->max_b_frames = (int)var.int64Value;
             }
             if (ctx->max_consecutive_b_frames < ctx->max_b_frames) {
-                av_log(ctx, AVERROR_BUG, "Maxium B frames needs to be greater than the specified B frame count.\n");
+                av_log(ctx, AV_LOG_ERROR, "Maxium B frames needs to be greater than the specified B frame count.\n");
             }
         }
     }
     else {
         if (ctx->max_b_frames != -1) {
-            av_log(ctx, AVERROR_BUG, "Maxium number of B frames needs to be specified.\n");
+            av_log(ctx, AV_LOG_ERROR, "Maxium number of B frames needs to be specified.\n");
         }
     }
     res = ctx->encoder->pVtbl->GetProperty(ctx->encoder, AMF_VIDEO_ENCODER_B_PIC_PATTERN, &var);
