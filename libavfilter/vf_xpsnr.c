@@ -410,7 +410,7 @@ static int do_xpsnr(FFFrameSync *fs)
     int16_t *prec   [3];
     uint64_t wsse64 [3] = {0, 0, 0};
     double cur_xpsnr[3] = {INFINITY, INFINITY, INFINITY};
-    int c, ret_value;
+    int ret_value;
     AVDictionary **metadata;
 
     if ((ret_value = ff_framesync_dualinput_get(fs, &master, &ref)) < 0)
@@ -425,7 +425,7 @@ static int do_xpsnr(FFFrameSync *fs)
     if (!s->weights)
         s->weights  = av_malloc_array(w_blk * h_blk, sizeof(double));
 
-    for (c = 0; c < s->num_comps; c++) {  /* create temporal org buffer memory */
+    for (int c = 0; c < s->num_comps; c++) {  /* create temporal org buffer memory */
         s->line_sizes[c] = master->linesize[c];
 
         if (c == 0) { /* luma ch. */
@@ -442,7 +442,7 @@ static int do_xpsnr(FFFrameSync *fs)
     }
 
     if (s->bpp == 1) { /* 8 bit */
-        for (c = 0; c < s->num_comps; c++) { /* allocate org/rec buffer memory */
+        for (int c = 0; c < s->num_comps; c++) { /* allocate org/rec buffer memory */
             const int m = s->line_sizes[c];  /* master stride */
             const int r = ref->linesize[c];  /* ref/c stride */
             const int o = s->plane_width[c]; /* XPSNR stride */
@@ -463,7 +463,7 @@ static int do_xpsnr(FFFrameSync *fs)
             }
         }
     } else {  /* 10, 12, 14 bit */
-        for (c = 0; c < s->num_comps; c++) {
+        for (int c = 0; c < s->num_comps; c++) {
             porg[c] = (int16_t *) master->data[c];
             prec[c] = (int16_t *)    ref->data[c];
         }
@@ -475,7 +475,7 @@ static int do_xpsnr(FFFrameSync *fs)
     if ( ret_value < 0 )
         return ret_value; /* an error here means something went wrong earlier! */
 
-    for (c = 0; c < s->num_comps; c++) {
+    for (int c = 0; c < s->num_comps; c++) {
         const double sqrt_wsse = sqrt((double) wsse64[c]);
 
         cur_xpsnr[c] = get_avg_xpsnr (sqrt_wsse, INFINITY,
@@ -495,7 +495,7 @@ static int do_xpsnr(FFFrameSync *fs)
     if (s->stats_file) { /* print out frame- and component-wise XPSNR averages */
         fprintf(s->stats_file, "n: %4"PRId64"", s->num_frames_64);
 
-        for (c = 0; c < s->num_comps; c++)
+        for (int c = 0; c < s->num_comps; c++)
             fprintf(s->stats_file, "  XPSNR %c: %3.4f", s->comps[c], cur_xpsnr[c]);
         fprintf(s->stats_file, "\n");
     }
