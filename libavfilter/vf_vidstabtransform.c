@@ -133,6 +133,7 @@ static int config_input(AVFilterLink *inlink)
     int is_planar = desc->flags & AV_PIX_FMT_FLAG_PLANAR;
 
     VSTransformData *td = &(tc->td);
+    VSManyLocalMotions mlms;
 
     VSFrameInfo fi_src;
     VSFrameInfo fi_dest;
@@ -198,20 +199,17 @@ static int config_input(AVFilterLink *inlink)
         int ret = AVERROR(errno);
         av_log(ctx, AV_LOG_ERROR, "cannot open input file %s: %s\n", tc->input, av_err2str(ret));
         return ret;
-    } else {
-        VSManyLocalMotions mlms;
-        if (vsReadLocalMotionsFile(f, &mlms) == VS_OK) {
-            // calculate the actual transforms from the local motions
-            if (vsLocalmotions2Transforms(td, &mlms, &tc->trans) != VS_OK) {
-                av_log(ctx, AV_LOG_ERROR, "calculating transformations failed\n");
-                return AVERROR(EINVAL);
-            }
-        } else { // try to read old format
-            if (!vsReadOldTransforms(td, f, &tc->trans)) { /* read input file */
-                av_log(ctx, AV_LOG_ERROR, "error parsing input file %s\n", tc->input);
-                return AVERROR(EINVAL);
-            }
+    }
+
+    if (vsReadLocalMotionsFile(f, &mlms) == VS_OK) {
+        // calculate the actual transforms from the local motions
+        if (vsLocalmotions2Transforms(td, &mlms, &tc->trans) != VS_OK) {
+            av_log(ctx, AV_LOG_ERROR, "calculating transformations failed\n");
+            return AVERROR(EINVAL);
         }
+    } else if (!vsReadOldTransforms(td, f, &tc->trans)) { // try to read old format
+        av_log(ctx, AV_LOG_ERROR, "error parsing input file %s\n", tc->input);
+        return AVERROR(EINVAL);
     }
     fclose(f);
 
