@@ -143,8 +143,9 @@ static int config_input(AVFilterLink *inlink)
 
     s->f = avpriv_fopen_utf8(s->result, file_mode);
     if (s->f == NULL) {
-        av_log(ctx, AV_LOG_ERROR, "cannot open transform file %s\n", s->result);
-        return AVERROR(EINVAL);
+        int err = AVERROR(errno);
+        av_log(ctx, AV_LOG_ERROR, "cannot open transform file %s: %s\n", s->result, av_err2str(err));
+        return err;
     }
     if (vsPrepareFile(md, s->f) != VS_OK) {
         av_log(ctx, AV_LOG_ERROR, "cannot write to transform file %s\n", s->result);
