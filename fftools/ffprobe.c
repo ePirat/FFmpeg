@@ -280,7 +280,7 @@ static const char *get_stream_group_type(const void *data)
     return av_x_if_null(avformat_stream_group_name(stg->type), "unknown");
 }
 
-static struct section sections[] = {
+static struct section ffprobe_sections[] = {
     [SECTION_ID_CHAPTERS] =           { SECTION_ID_CHAPTERS, "chapters", SECTION_FLAG_IS_ARRAY, { SECTION_ID_CHAPTER, -1 } },
     [SECTION_ID_CHAPTER] =            { SECTION_ID_CHAPTER, "chapter", 0, { SECTION_ID_CHAPTER_TAGS, -1 } },
     [SECTION_ID_CHAPTER_TAGS] =       { SECTION_ID_CHAPTER_TAGS, "tags", SECTION_FLAG_HAS_VARIABLE_FIELDS, { -1 }, .element_name = "tag", .unique_name = "chapter_tags" },
@@ -3573,9 +3573,9 @@ static void print_iamf_param_definition(WriterContext *w, const char *name,
                                         const AVIAMFParamDefinition *param, SectionID section_id)
 {
     SectionID subsection_id, parameter_section_id;
-    subsection_id = sections[section_id].children_ids[0];
+    subsection_id = ffprobe_sections[section_id].children_ids[0];
     av_assert0(subsection_id != -1);
-    parameter_section_id = sections[subsection_id].children_ids[0];
+    parameter_section_id = ffprobe_sections[subsection_id].children_ids[0];
     av_assert0(parameter_section_id != -1);
     writer_print_section_header(w, "IAMF Param Definition", section_id);
     print_str("name",           name);
@@ -4217,7 +4217,7 @@ static int opt_format(void *optctx, const char *opt, const char *arg)
 static inline void mark_section_show_entries(SectionID section_id,
                                              int show_all_entries, AVDictionary *entries)
 {
-    struct section *section = &sections[section_id];
+    struct section *section = &ffprobe_sections[section_id];
 
     section->show_all_entries = show_all_entries;
     if (show_all_entries) {
@@ -4233,8 +4233,8 @@ static int match_section(const char *section_name,
 {
     int i, ret = 0;
 
-    for (i = 0; i < FF_ARRAY_ELEMS(sections); i++) {
-        const struct section *section = &sections[i];
+    for (i = 0; i < FF_ARRAY_ELEMS(ffprobe_sections); i++) {
+        const struct section *section = &ffprobe_sections[i];
         if (!strcmp(section_name, section->name) ||
             (section->unique_name && !strcmp(section_name, section->unique_name))) {
             av_log(NULL, AV_LOG_DEBUG,
@@ -4507,7 +4507,7 @@ static int opt_pretty(void *optctx, const char *opt, const char *arg)
 static void print_section(SectionID id, int level)
 {
     const SectionID *pid;
-    const struct section *section = &sections[id];
+    const struct section *section = &ffprobe_sections[id];
     printf("%c%c%c%c",
            section->flags & SECTION_FLAG_IS_WRAPPER           ? 'W' : '.',
            section->flags & SECTION_FLAG_IS_ARRAY             ? 'A' : '.',
@@ -4614,8 +4614,8 @@ static const OptionDef real_options[] = {
 
 static inline int check_section_show_entries(int section_id)
 {
-    struct section *section = &sections[section_id];
-    if (sections[section_id].show_all_entries || sections[section_id].entries_to_show)
+    struct section *section = &ffprobe_sections[section_id];
+    if (ffprobe_sections[section_id].show_all_entries || ffprobe_sections[section_id].entries_to_show)
         return 1;
     for (const SectionID *id = section->children_ids; *id != -1; id++)
         if (check_section_show_entries(*id))
@@ -4741,7 +4741,7 @@ int main(int argc, char **argv)
     }
 
     if ((ret = writer_open(&wctx, w, w_args,
-                           sections, FF_ARRAY_ELEMS(sections), output_filename)) >= 0) {
+                           ffprobe_sections, FF_ARRAY_ELEMS(ffprobe_sections), output_filename)) >= 0) {
         if (w == &xml_writer)
             wctx->string_validation_utf8_flags |= AV_UTF8_FLAG_EXCLUDE_XML_INVALID_CONTROL_CODES;
 
@@ -4786,8 +4786,8 @@ end:
     av_hash_freep(&hash);
 
     uninit_opts();
-    for (i = 0; i < FF_ARRAY_ELEMS(sections); i++)
-        av_dict_free(&(sections[i].entries_to_show));
+    for (i = 0; i < FF_ARRAY_ELEMS(ffprobe_sections); i++)
+        av_dict_free(&(ffprobe_sections[i].entries_to_show));
 
     avformat_network_deinit();
 
