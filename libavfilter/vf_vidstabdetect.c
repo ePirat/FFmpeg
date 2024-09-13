@@ -145,11 +145,10 @@ static int config_input(AVFilterLink *inlink)
     if (s->f == NULL) {
         av_log(ctx, AV_LOG_ERROR, "cannot open transform file %s\n", s->result);
         return AVERROR(EINVAL);
-    } else {
-        if (vsPrepareFile(md, s->f) != VS_OK) {
-            av_log(ctx, AV_LOG_ERROR, "cannot write to transform file %s\n", s->result);
-            return AVERROR(EINVAL);
-        }
+    }
+    if (vsPrepareFile(md, s->f) != VS_OK) {
+        av_log(ctx, AV_LOG_ERROR, "cannot write to transform file %s\n", s->result);
+        return AVERROR(EINVAL);
     }
     return 0;
 }
@@ -180,14 +179,13 @@ static int filter_frame(AVFilterLink *inlink, AVFrame *in)
     if (vsMotionDetection(md, &localmotions, &frame) != VS_OK) {
         av_log(ctx, AV_LOG_ERROR, "motion detection failed");
         return AVERROR_EXTERNAL;
-    } else {
-        if (vsWriteToFile(md, s->f, &localmotions) != VS_OK) {
-            ret = AVERROR(errno);
-            av_log(ctx, AV_LOG_ERROR, "cannot write to transform file");
-            return ret;
-        }
-        vs_vector_del(&localmotions);
     }
+    if (vsWriteToFile(md, s->f, &localmotions) != VS_OK) {
+        ret = AVERROR(errno);
+        av_log(ctx, AV_LOG_ERROR, "cannot write to transform file");
+        return ret;
+    }
+    vs_vector_del(&localmotions);
 
     return ff_filter_frame(outlink, in);
 }
