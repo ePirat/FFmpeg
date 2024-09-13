@@ -966,10 +966,17 @@ static av_cold int init(AVFilterContext *ctx)
     size_t bytes_read;
     int ret = 0;
 
-    weights_file = avpriv_fopen_utf8(s->weights_file, "rb");
-    if (!weights_file) {
+    if (!s->weights_file) {
         av_log(ctx, AV_LOG_ERROR, "No weights file provided, aborting!\n");
         return AVERROR(EINVAL);
+    }
+
+    weights_file = avpriv_fopen_utf8(s->weights_file, "rb");
+    if (!weights_file) {
+        ret = AVERROR(errno);
+        av_log(ctx, AV_LOG_ERROR, "Couldn't open weights file %s: %s\n",
+            s->weights_file, av_err2str(ret));
+        return ret;
     }
 
     if (fseek(weights_file, 0, SEEK_END)) {
