@@ -196,7 +196,7 @@ static int config_input(AVFilterLink *inlink)
     f = avpriv_fopen_utf8(tc->input, "rb");
     if (!f) {
         int ret = AVERROR(errno);
-        av_log(ctx, AV_LOG_ERROR, "cannot open input file %s\n", tc->input);
+        av_log(ctx, AV_LOG_ERROR, "cannot open input file %s: %s\n", tc->input, av_err2str(ret));
         return ret;
     } else {
         VSManyLocalMotions mlms;
