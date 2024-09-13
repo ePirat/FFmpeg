@@ -239,7 +239,7 @@ typedef enum {
 } SectionID;
 
 struct section {
-    int id;             ///< unique id identifying a section
+    SectionID id;             ///< unique id identifying a section
     const char *name;
 
 #define SECTION_FLAG_IS_WRAPPER      1 ///< the section only contains other sections, but has no data at its own level
@@ -785,9 +785,9 @@ fail:
 
 static inline void writer_print_section_header(WriterContext *wctx,
                                                const void *data,
-                                               int section_id)
+                                               SectionID section_id)
 {
-    int parent_section_id;
+    SectionID parent_section_id;
     wctx->level++;
     av_assert0(wctx->level < SECTION_MAX_NB_LEVELS);
     av_assert0(section_id < wctx->nb_sections);
@@ -811,8 +811,8 @@ static inline void writer_print_section_header(WriterContext *wctx,
 
 static inline void writer_print_section_footer(WriterContext *wctx)
 {
-    int section_id = wctx->section[wctx->level]->id;
-    int parent_section_id = wctx->level ?
+    SectionID section_id = wctx->section[wctx->level]->id;
+    SectionID parent_section_id = wctx->level ?
         wctx->section[wctx->level-1]->id : SECTION_ID_NONE;
 
     if (parent_section_id != SECTION_ID_NONE)
@@ -2041,7 +2041,7 @@ static void writer_register_all(void)
     memset( (ptr) + (cur_n), 0, ((new_n) - (cur_n)) * sizeof(*(ptr)) ); \
 }
 
-static inline int show_tags(WriterContext *w, AVDictionary *tags, int section_id)
+static inline int show_tags(WriterContext *w, AVDictionary *tags, SectionID section_id)
 {
     const AVDictionaryEntry *tag = NULL;
     int ret = 0;
@@ -2727,7 +2727,7 @@ static void clear_log(int need_lock)
         pthread_mutex_unlock(&log_mutex);
 }
 
-static int show_log(WriterContext *w, int section_ids, int section_id, int log_level)
+static int show_log(WriterContext *w, SectionID section_ids, SectionID section_id, int log_level)
 {
     int i;
     pthread_mutex_lock(&log_mutex);
@@ -4006,7 +4006,7 @@ static int probe_file(WriterContext *wctx, const char *filename,
 {
     InputFile ifile = { 0 };
     int ret, i;
-    int section_id;
+    SectionID section_id;
 
     do_read_frames = do_show_frames || do_count_frames;
     do_read_packets = do_show_packets || do_count_packets;
@@ -4615,7 +4615,7 @@ static const OptionDef real_options[] = {
     { NULL, },
 };
 
-static inline int check_section_show_entries(int section_id)
+static inline int check_section_show_entries(SectionID section_id)
 {
     struct section *section = &ffprobe_sections[section_id];
     if (ffprobe_sections[section_id].show_all_entries || ffprobe_sections[section_id].entries_to_show)
