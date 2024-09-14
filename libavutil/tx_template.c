@@ -1746,8 +1746,6 @@ static void TX_NAME(ff_tx_rdft_ ##n)(AVTXContext *s, void *_dst,               \
     TXSample *out = _dst; /* Half-complex is forward-only */                   \
     TXSample tmp_dc;                                                           \
     av_unused TXSample tmp_mid;                                                \
-    TXSample tmp[4];                                                           \
-    TXComplex sf, sl;                                                          \
                                                                                \
     s->fn[0](&s->sub[0], _dst, _src, sizeof(TXComplex));                       \
                                                                                \
@@ -1762,8 +1760,9 @@ static void TX_NAME(ff_tx_rdft_ ##n)(AVTXContext *s, void *_dst,               \
     if (!mod2) {                                                               \
         data[len4].im = MULT(fact[3], data[len4].im);                          \
     } else {                                                                   \
-        sf = data[len4];                                                       \
-        sl = data[len4 + 1];                                                   \
+        TXSample tmp[4];                                                       \
+        TXComplex sf = data[len4];                                             \
+        TXComplex sl = data[len4 + 1];                                         \
         if (mode == AV_TX_REAL_TO_REAL)                                        \
             tmp[0] = MULT(fact[4], (sf.re + sl.re));                           \
         else                                                                   \
@@ -1880,14 +1879,14 @@ static av_cold int TX_NAME(ff_tx_dct_init)(AVTXContext *s,
     return 0;
 }
 
-static void TX_NAME(ff_tx_dctII)(AVTXContext *s, void *_dst,
+static void TX_NAME(ff_tx_dctII)(AVTXContext *sctx, void *_dst,
                                  void *_src, ptrdiff_t stride)
 {
     TXSample *dst = _dst;
     TXSample *src = _src;
-    const int len = s->len;
+    const int len = sctx->len;
     const int len2 = len >> 1;
-    const TXSample *exp = (void *)s->exp;
+    const TXSample *exp = (void *)sctx->exp;
     TXSample next;
 #ifdef TX_INT32
     int64_t tmp1, tmp2;
@@ -1917,7 +1916,7 @@ static void TX_NAME(ff_tx_dctII)(AVTXContext *s, void *_dst,
         src[len - i - 1] = tmp1 - tmp2;
     }
 
-    s->fn[0](&s->sub[0], dst, src, sizeof(TXComplex));
+    sctx->fn[0](&sctx->sub[0], dst, src, sizeof(TXComplex));
 
     next = dst[len];
 
