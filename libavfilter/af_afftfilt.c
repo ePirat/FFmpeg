@@ -103,7 +103,7 @@ static int config_input(AVFilterLink *inlink)
     AVFilterContext *ctx = inlink->dst;
     AFFTFiltContext *s = ctx->priv;
     char *saveptr = NULL;
-    int ret = 0, ch;
+    int ret = 0;
     float overlap, scale = 1.f;
     char *args;
     const char *last_expr = "1";
@@ -142,7 +142,7 @@ static int config_input(AVFilterLink *inlink)
     if (!s->fft_temp)
         return AVERROR(ENOMEM);
 
-    for (ch = 0; ch < inlink->ch_layout.nb_channels; ch++) {
+    for (int ch = 0; ch < inlink->ch_layout.nb_channels; ch++) {
         s->fft_in[ch] = av_calloc(buf_size, sizeof(**s->fft_in));
         if (!s->fft_in[ch])
             return AVERROR(ENOMEM);
@@ -168,7 +168,7 @@ static int config_input(AVFilterLink *inlink)
     if (!args)
         return AVERROR(ENOMEM);
 
-    for (ch = 0; ch < inlink->ch_layout.nb_channels; ch++) {
+    for (int ch = 0; ch < inlink->ch_layout.nb_channels; ch++) {
         char *arg = av_strtok(ch == 0 ? args : NULL, "|", &saveptr);
 
         ret = av_expr_parse(&s->real[ch], arg ? arg : last_expr, var_names,
@@ -188,7 +188,7 @@ static int config_input(AVFilterLink *inlink)
 
     saveptr = NULL;
     last_expr = "1";
-    for (ch = 0; ch < inlink->ch_layout.nb_channels; ch++) {
+    for (int ch = 0; ch < inlink->ch_layout.nb_channels; ch++) {
         char *arg = av_strtok(ch == 0 ? args : NULL, "|", &saveptr);
 
         ret = av_expr_parse(&s->imag[ch], arg ? arg : last_expr, var_names,
