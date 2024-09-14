@@ -1741,8 +1741,6 @@ static int send_to_enc_sq(Scheduler *sch, SchEnc *enc, AVFrame *frame)
         goto finish;
 
     while (1) {
-        SchEnc *enc;
-
         // TODO: the SQ API should be extended to allow returning EOF
         // for individual streams
         ret = sq_receive(sq->sq, -1, SQFRAME(sq->frame));
