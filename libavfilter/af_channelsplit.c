@@ -75,12 +75,12 @@ static av_cold int init(AVFilterContext *ctx)
 
     for (i = 0; i < channel_layout.nb_channels; i++) {
         enum AVChannel channel = av_channel_layout_channel_from_index(&channel_layout, i);
-        char buf[64];
+        char channel_name[64];
         AVFilterPad pad = { .flags = AVFILTERPAD_FLAG_FREE_NAME };
 
-        av_channel_name(buf, sizeof(buf), channel);
+        av_channel_name(channel_name, sizeof(channel_name), channel);
         pad.type = AVMEDIA_TYPE_AUDIO;
-        pad.name = av_strdup(buf);
+        pad.name = av_strdup(channel_name);
         if (!pad.name) {
             ret = AVERROR(ENOMEM);
             goto fail;
@@ -89,11 +89,11 @@ static av_cold int init(AVFilterContext *ctx)
         if (all) {
             s->map[i] = i;
         } else {
-            char buf[128];
-            av_channel_layout_describe(&s->channel_layout, buf, sizeof(buf));
+            char layout_name[128];
+            av_channel_layout_describe(&s->channel_layout, layout_name, sizeof(layout_name));
             if ((ret = av_channel_layout_index_from_channel(&s->channel_layout, channel)) < 0) {
                 av_log(ctx, AV_LOG_ERROR, "Channel name '%s' not present in channel layout '%s'.\n",
-                       pad.name, buf);
+                       pad.name, layout_name);
                 av_freep(&pad.name);
                 goto fail;
             }
