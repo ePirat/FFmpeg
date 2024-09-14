@@ -382,10 +382,10 @@ int av_parse_color(uint8_t *rgba_color, const char *color_string, int slen,
         rgba_color[3] = rgba;
     } else if (hex_offset ||
                strspn(color_string2, "0123456789ABCDEFabcdef") == len) {
-        char *tail;
-        unsigned int rgba = strtoul(color_string2, &tail, 16);
+        char *hextail;
+        unsigned int rgba = strtoul(color_string2, &hextail, 16);
 
-        if (*tail || (len != 6 && len != 8)) {
+        if (*hextail || (len != 6 && len != 8)) {
             av_log(log_ctx, AV_LOG_ERROR, "Invalid 0xRRGGBB[AA] color string: '%s'\n", color_string2);
             return AVERROR(EINVAL);
         }
