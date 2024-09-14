@@ -876,7 +876,7 @@ int ofilter_bind_enc(OutputFilter *ofilter, unsigned sched_idx_enc,
         } else
             ofp->sample_rates = opts->sample_rates;
         if (opts->ch_layout.nb_channels) {
-            int ret = set_channel_layout(ofp, opts->ch_layouts, &opts->ch_layout);
+            ret = set_channel_layout(ofp, opts->ch_layouts, &opts->ch_layout);
             if (ret < 0)
                 return ret;
         } else {
@@ -1249,7 +1249,7 @@ static int fg_complex_bind_input(FilterGraph *fg, InputFilter *ifilter)
     ViewSpecifier vs = { .type = VIEW_SPECIFIER_TYPE_NONE };
     const char *spec;
     char *p;
-    int i, ret;
+    int ret;
 
     if (ifp->linklabel && !strncmp(ifp->linklabel, "dec:", 4)) {
         // bind to a standalone decoder
@@ -1329,7 +1329,7 @@ static int fg_complex_bind_input(FilterGraph *fg, InputFilter *ifilter)
             }
         }
 
-        for (i = 0; i < s->nb_streams; i++) {
+        for (int i = 0; i < s->nb_streams; i++) {
             enum AVMediaType stream_type = s->streams[i]->codecpar->codec_type;
             if (stream_type != type &&
                 !(stream_type == AVMEDIA_TYPE_SUBTITLE &&
@@ -1961,7 +1961,7 @@ static int configure_filtergraph(FilterGraph *fg, FilterGraphThread *fgt)
 
     /* limit the lists of allowed formats to the ones selected, to
      * make sure they stay the same if the filtergraph is reconfigured later */
-    for (int i = 0; i < fg->nb_outputs; i++) {
+    for (i = 0; i < fg->nb_outputs; i++) {
         OutputFilter *ofilter = fg->outputs[i];
         OutputFilterPriv *ofp = ofp_from_ofilter(ofilter);
         AVFilterContext *sink = ofp->filter;
@@ -1992,7 +1992,7 @@ static int configure_filtergraph(FilterGraph *fg, FilterGraphThread *fgt)
             goto fail;
     }
 
-    for (int i = 0; i < fg->nb_inputs; i++) {
+    for (i = 0; i < fg->nb_inputs; i++) {
         InputFilterPriv *ifp = ifp_from_ifilter(fg->inputs[i]);
         AVFrame *tmp;
         while (av_fifo_read(ifp->frame_queue, &tmp, 1) >= 0) {
@@ -2008,7 +2008,7 @@ static int configure_filtergraph(FilterGraph *fg, FilterGraphThread *fgt)
     }
 
     /* send the EOFs for the finished inputs */
-    for (int i = 0; i < fg->nb_inputs; i++) {
+    for (i = 0; i < fg->nb_inputs; i++) {
         InputFilterPriv *ifp = ifp_from_ifilter(fg->inputs[i]);
         if (fgt->eof_in[i]) {
             ret = av_buffersrc_add_frame(ifp->filter, NULL);
