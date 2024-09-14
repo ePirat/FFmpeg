@@ -117,7 +117,6 @@ static int config_input(AVFilterLink *inlink)
 {
     AVFilterContext *ctx = inlink->dst;
     AudioDeclickContext *s = ctx->priv;
-    int i;
 
     s->pts = AV_NOPTS_VALUE;
     s->window_size = FFMAX(100, inlink->sample_rate * s->w / 1000.);
@@ -218,7 +217,7 @@ static int config_input(AVFilterLink *inlink)
     if (!s->chan)
         return AVERROR(ENOMEM);
 
-    for (i = 0; i < inlink->ch_layout.nb_channels; i++) {
+    for (int i = 0; i < inlink->ch_layout.nb_channels; i++) {
         DeclickChannel *c = &s->chan[i];
 
         c->detection = av_calloc(s->window_size, sizeof(*c->detection));
@@ -240,12 +239,10 @@ static int config_input(AVFilterLink *inlink)
 static void autocorrelation(const double *input, int order, int size,
                             double *output, double scale)
 {
-    int i, j;
-
-    for (i = 0; i <= order; i++) {
+    for (int i = 0; i <= order; i++) {
         double value = 0.;
 
-        for (j = i; j < size; j++)
+        for (int j = i; j < size; j++)
             value += input[j] * input[j - i];
 
         output[i] = value * scale;
@@ -256,7 +253,6 @@ static double autoregression(const double *samples, int ar_order,
                              int nb_samples, double *k, double *r, double *a)
 {
     double alpha;
-    int i, j;
 
     memset(a, 0, ar_order * sizeof(*a));
 
@@ -265,23 +261,23 @@ static double autoregression(const double *samples, int ar_order,
     /* Levinson-Durbin algorithm */
     k[0] = a[0] = -r[1] / r[0];
     alpha = r[0] * (1. - k[0] * k[0]);
-    for (i = 1; i < ar_order; i++) {
+    for (int i = 1; i < ar_order; i++) {
         double epsilon = 0.;
 
-        for (j = 0; j < i; j++)
+        for (int j = 0; j < i; j++)
             epsilon += a[j] * r[i - j];
         epsilon += r[i + 1];
 
         k[i] = -epsilon / alpha;
         alpha *= (1. - k[i] * k[i]);
-        for (j = i - 1; j >= 0; j--)
+        for (int j = i - 1; j >= 0; j--)
             k[j] = a[j] + k[i] * a[i - j - 1];
-        for (j = 0; j <= i; j++)
+        for (int j = 0; j <= i; j++)
             a[j] = k[j];
     }
 
     k[0] = 1.;
-    for (i = 1; i <= ar_order; i++)
+    for (int i = 1; i <= ar_order; i++)
         k[i] = a[i - 1];
 
     return sqrt(alpha);
@@ -289,9 +285,7 @@ static double autoregression(const double *samples, int ar_order,
 
 static int isfinite_array(double *samples, int nb_samples)
 {
-    int i;
-
-    for (i = 0; i < nb_samples; i++)
+    for (int i = 0; i < nb_samples; i++)
         if (!isfinite(samples[i]))
             return 0;
 
@@ -323,14 +317,12 @@ static int find_index(int *index, int value, int size)
 
 static int factorization(double *matrix, int n)
 {
-    int i, j, k;
-
-    for (i = 0; i < n; i++) {
+    for (int i = 0; i < n; i++) {
         const int in = i * n;
         double value;
 
         value = matrix[in + i];
-        for (j = 0; j < i; j++)
+        for (int j = 0; j < i; j++)
             value -= matrix[j * n + j] * matrix[in + j] * matrix[in + j];
 
         if (value == 0.) {
@@ -338,12 +330,12 @@ static int factorization(double *matrix, int n)
         }
 
         matrix[in + i] = value;
-        for (j = i + 1; j < n; j++) {
+        for (int j = i + 1; j < n; j++) {
             const int jn = j * n;
             double x;
 
             x = matrix[jn + i];
-            for (k = 0; k < i; k++)
+            for (int k = 0; k < i; k++)
                 x -= matrix[k * n + k] * matrix[in + k] * matrix[jn + k];
             matrix[jn + i] = x / matrix[in + i];
         }
@@ -355,7 +347,7 @@ static int factorization(double *matrix, int n)
 static int do_interpolation(DeclickChannel *c, double *matrix,
                             double *vector, int n, double *out)
 {
-    int i, j, ret;
+    int ret;
     double *y;
 
     ret = factorization(matrix, n);
@@ -367,19 +359,19 @@ static int do_interpolation(DeclickChannel *c, double *matrix,
     if (!y)
         return AVERROR(ENOMEM);
 
-    for (i = 0; i < n; i++) {
+    for (int i = 0; i < n; i++) {
         const int in = i * n;
         double value;
 
         value = vector[i];
-        for (j = 0; j < i; j++)
+        for (int j = 0; j < i; j++)
             value -= matrix[in + j] * y[j];
         y[i] = value;
     }
 
-    for (i = n - 1; i >= 0; i--) {
+    for (int i = n - 1; i >= 0; i--) {
         out[i] = y[i] / matrix[i * n + i];
-        for (j = i + 1; j < n; j++)
+        for (int j = i + 1; j < n; j++)
             out[i] -= matrix[j * n + i] * out[j];
     }
 
@@ -391,7 +383,6 @@ static int interpolation(DeclickChannel *c, const double *src, int ar_order,
                          double *auxiliary, double *interpolated)
 {
     double *vector, *matrix;
-    int i, j;
 
     av_fast_malloc(&c->matrix, &c->matrix_size, nb_errors * nb_errors * sizeof(*c->matrix));
     matrix = c->matrix;
@@ -405,10 +396,10 @@ static int interpolation(DeclickChannel *c, const double *src, int ar_order,
 
     autocorrelation(acoefficients, ar_order, ar_order + 1, auxiliary, 1.);
 
-    for (i = 0; i < nb_errors; i++) {
+    for (int i = 0; i < nb_errors; i++) {
         const int im = i * nb_errors;
 
-        for (j = i; j < nb_errors; j++) {
+        for (int j = i; j < nb_errors; j++) {
             if (abs(index[j] - index[i]) <= ar_order) {
                 matrix[j * nb_errors + i] = matrix[im + j] = auxiliary[abs(index[j] - index[i])];
             } else {
@@ -417,10 +408,10 @@ static int interpolation(DeclickChannel *c, const double *src, int ar_order,
         }
     }
 
-    for (i = 0; i < nb_errors; i++) {
+    for (int i = 0; i < nb_errors; i++) {
         double value = 0.;
 
-        for (j = -ar_order; j <= ar_order; j++)
+        for (int j = -ar_order; j <= ar_order; j++)
             if (find_index(index, index[i] - j, nb_errors))
                 value -= src[index[i] - j] * auxiliary[abs(j)];
 
@@ -439,7 +430,7 @@ static int detect_clips(AudioDeclickContext *s, DeclickChannel *c,
     const double threshold = s->threshold;
     double max_amplitude = 0;
     unsigned *histogram;
-    int i, nb_clips = 0;
+    int nb_clips = 0;
 
     av_fast_malloc(&c->histogram, &c->histogram_size, s->nb_hbins * sizeof(*c->histogram));
     if (!c->histogram)
@@ -447,7 +438,7 @@ static int detect_clips(AudioDeclickContext *s, DeclickChannel *c,
     histogram = c->histogram;
     memset(histogram, 0, sizeof(*histogram) * s->nb_hbins);
 
-    for (i = 0; i < s->window_size; i++) {
+    for (int i = 0; i < s->window_size; i++) {
         const unsigned idx = fmin(fabs(src[i]), 1) * (s->nb_hbins - 1);
 
         histogram[idx]++;
@@ -455,7 +446,7 @@ static int detect_clips(AudioDeclickContext *s, DeclickChannel *c,
         clip[i] = 0;
     }
 
-    for (i = s->nb_hbins - 1; i > 1; i--) {
+    for (int i = s->nb_hbins - 1; i > 1; i--) {
         if (histogram[i]) {
             if (histogram[i] / (double)FFMAX(histogram[i - 1], 1) > threshold) {
                 max_amplitude = i / (double)s->nb_hbins;
@@ -465,7 +456,7 @@ static int detect_clips(AudioDeclickContext *s, DeclickChannel *c,
     }
 
     if (max_amplitude > 0.) {
-        for (i = 0; i < s->window_size; i++) {
+        for (int i = 0; i < s->window_size; i++) {
             clip[i] = fabs(src[i]) >= max_amplitude;
         }
     }
@@ -473,7 +464,7 @@ static int detect_clips(AudioDeclickContext *s, DeclickChannel *c,
     memset(clip, 0, s->ar_order * sizeof(*clip));
     memset(clip + (s->window_size - s->ar_order), 0, s->ar_order * sizeof(*clip));
 
-    for (i = s->ar_order; i < s->window_size - s->ar_order; i++)
+    for (int i = s->ar_order; i < s->window_size - s->ar_order; i++)
         if (clip[i])
             index[nb_clips++] = i;
 
@@ -487,27 +478,27 @@ static int detect_clicks(AudioDeclickContext *s, DeclickChannel *c,
                          const double *src, double *dst)
 {
     const double threshold = s->threshold;
-    int i, j, nb_clicks = 0, prev = -1;
+    int nb_clicks = 0, prev = -1;
 
     memset(detection, 0, s->window_size * sizeof(*detection));
 
-    for (i = s->ar_order; i < s->window_size; i++) {
-        for (j = 0; j <= s->ar_order; j++) {
+    for (int i = s->ar_order; i < s->window_size; i++) {
+        for (int j = 0; j <= s->ar_order; j++) {
             detection[i] += acoefficients[j] * src[i - j];
         }
     }
 
-    for (i = 0; i < s->window_size; i++) {
+    for (int i = 0; i < s->window_size; i++) {
         click[i] = fabs(detection[i]) > sigmae * threshold;
         dst[i] = src[i];
     }
 
-    for (i = 0; i < s->window_size; i++) {
+    for (int i = 0; i < s->window_size; i++) {
         if (!click[i])
             continue;
 
         if (prev >= 0 && (i > prev + 1) && (i <= s->nb_burst_samples + prev))
-            for (j = prev + 1; j < i; j++)
+            for (int j = prev + 1; j < i; j++)
                 click[j] = 1;
         prev = i;
     }
@@ -515,7 +506,7 @@ static int detect_clicks(AudioDeclickContext *s, DeclickChannel *c,
     memset(click, 0, s->ar_order * sizeof(*click));
     memset(click + (s->window_size - s->ar_order), 0, s->ar_order * sizeof(*click));
 
-    for (i = s->ar_order; i < s->window_size - s->ar_order; i++)
+    for (int i = s->ar_order; i < s->window_size - s->ar_order; i++)
         if (click[i])
             index[nb_clicks++] = i;
 
@@ -539,7 +530,7 @@ static int filter_channel(AVFilterContext *ctx, void *arg, int ch, int nb_jobs)
     const double *w = s->window_func_lut;
     DeclickChannel *c = &s->chan[ch];
     double sigmae;
-    int j, ret;
+    int ret;
 
     sigmae = autoregression(src, s->ar_order, s->window_size, c->acoefficients, c->acorrelation, c->tmp);
 
@@ -560,7 +551,7 @@ static int filter_channel(AVFilterContext *ctx, void *arg, int ch, int nb_jobs)
 
             av_audio_fifo_peek(s->efifo, (void**)s->enabled->extended_data, s->window_size);
 
-            for (j = 0; j < nb_errors; j++) {
+            for (int j = 0; j < nb_errors; j++) {
                 if (enabled[index[j]]) {
                     dst[index[j]] = interpolated[j];
                     is[index[j]] = 1;
@@ -572,15 +563,15 @@ static int filter_channel(AVFilterContext *ctx, void *arg, int ch, int nb_jobs)
     }
 
     if (s->method == 0) {
-        for (j = 0; j < s->window_size; j++)
+        for (int j = 0; j < s->window_size; j++)
             buf[j] += dst[j] * w[j];
     } else {
         const int skip = s->overlap_skip;
 
-        for (j = 0; j < s->hop_size; j++)
+        for (int j = 0; j < s->hop_size; j++)
             buf[j] = dst[skip + j];
     }
-    for (j = 0; j < s->hop_size; j++)
+    for (int j = 0; j < s->hop_size; j++)
         ptr[j] = buf[j];
 
     memmove(buf, buf + s->hop_size, (s->window_size * 2 - s->hop_size) * sizeof(*buf));
@@ -597,7 +588,7 @@ static int filter_frame(AVFilterLink *inlink)
     AVFilterLink *outlink = ctx->outputs[0];
     AudioDeclickContext *s = ctx->priv;
     AVFrame *out = NULL;
-    int ret = 0, j, ch, detected_errors = 0;
+    int ret = 0, ch, detected_errors = 0;
     ThreadData td;
 
     out = ff_get_audio_buffer(outlink, s->hop_size);
@@ -617,7 +608,7 @@ static int filter_frame(AVFilterLink *inlink)
     for (ch = 0; ch < s->in->ch_layout.nb_channels; ch++) {
         double *is = (double *)s->is->extended_data[ch];
 
-        for (j = 0; j < s->hop_size; j++) {
+        for (int j = 0; j < s->hop_size; j++) {
             if (is[j])
                 detected_errors++;
         }
@@ -728,7 +719,6 @@ static av_cold int init(AVFilterContext *ctx)
 static av_cold void uninit(AVFilterContext *ctx)
 {
     AudioDeclickContext *s = ctx->priv;
-    int i;
 
     if (s->nb_samples > 0)
         av_log(ctx, AV_LOG_INFO, "Detected %s in %"PRId64" of %"PRId64" samples (%g%%).\n",
@@ -745,7 +735,7 @@ static av_cold void uninit(AVFilterContext *ctx)
     av_frame_free(&s->is);
 
     if (s->chan) {
-        for (i = 0; i < s->nb_channels; i++) {
+        for (int i = 0; i < s->nb_channels; i++) {
             DeclickChannel *c = &s->chan[i];
 
             av_freep(&c->detection);
