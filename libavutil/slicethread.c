@@ -101,7 +101,7 @@ int avpriv_slicethread_create(AVSliceThread **pctx, void *priv,
                               int nb_threads)
 {
     AVSliceThread *ctx;
-    int nb_workers, i;
+    int nb_workers;
     int ret;
 
     av_assert0(nb_threads >= 0);
@@ -150,7 +150,7 @@ int avpriv_slicethread_create(AVSliceThread **pctx, void *priv,
     }
     ctx->done        = 0;
 
-    for (i = 0; i < nb_workers; i++) {
+    for (int i = 0; i < nb_workers; i++) {
         WorkerContext *w = &ctx->workers[i];
         w->ctx = ctx;
         ret = pthread_mutex_init(&w->mutex, NULL);
@@ -188,7 +188,7 @@ int avpriv_slicethread_create(AVSliceThread **pctx, void *priv,
 
 void avpriv_slicethread_execute(AVSliceThread *ctx, int nb_jobs, int execute_main)
 {
-    int nb_workers, i, is_last = 0;
+    int nb_workers, is_last = 0;
 
     av_assert0(nb_jobs > 0);
     ctx->nb_jobs           = nb_jobs;
@@ -199,7 +199,7 @@ void avpriv_slicethread_execute(AVSliceThread *ctx, int nb_jobs, int execute_mai
     if (!ctx->main_func || !execute_main)
         nb_workers--;
 
-    for (i = 0; i < nb_workers; i++) {
+    for (int i = 0; i < nb_workers; i++) {
         WorkerContext *w = &ctx->workers[i];
         pthread_mutex_lock(&w->mutex);
         w->done = 0;
@@ -224,7 +224,7 @@ void avpriv_slicethread_execute(AVSliceThread *ctx, int nb_jobs, int execute_mai
 void avpriv_slicethread_free(AVSliceThread **pctx)
 {
     AVSliceThread *ctx;
-    int nb_workers, i;
+    int nb_workers;
 
     if (!pctx || !*pctx)
         return;
@@ -235,7 +235,7 @@ void avpriv_slicethread_free(AVSliceThread **pctx)
         nb_workers--;
 
     ctx->finished = 1;
-    for (i = 0; i < nb_workers; i++) {
+    for (int i = 0; i < nb_workers; i++) {
         WorkerContext *w = &ctx->workers[i];
         pthread_mutex_lock(&w->mutex);
         w->done = 0;
@@ -243,7 +243,7 @@ void avpriv_slicethread_free(AVSliceThread **pctx)
         pthread_mutex_unlock(&w->mutex);
     }
 
-    for (i = 0; i < nb_workers; i++) {
+    for (int i = 0; i < nb_workers; i++) {
         WorkerContext *w = &ctx->workers[i];
         pthread_join(w->thread, NULL);
         pthread_cond_destroy(&w->cond);
