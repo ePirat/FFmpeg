@@ -296,18 +296,18 @@ static int iir_ch_lattice_## name(AVFilterContext *ctx, void *arg,      \
     const double og = s->wet_gain;                                      \
     const double mix = s->mix;                                          \
     ThreadData *td = arg;                                               \
-    AVFrame *in = td->in, *out = td->out;                               \
-    const type *src = (const type *)in->extended_data[ch];              \
+    AVFrame *in_frame = td->in, *out_frame = td->out;                   \
+    const type *src = (const type *)in_frame->extended_data[ch];        \
     double n0, n1, p0, *x = (double *)s->iir[ch].cache[0];              \
     const int nb_stages = s->iir[ch].nb_ab[1];                          \
     const double *v = s->iir[ch].ab[0];                                 \
     const double *k = s->iir[ch].ab[1];                                 \
     const double g = s->iir[ch].g;                                      \
     int *clippings = &s->iir[ch].clippings;                             \
-    type *dst = (type *)out->extended_data[ch];                         \
+    type *dst = (type *)out_frame->extended_data[ch];                   \
     int n;                                                              \
                                                                         \
-    for (n = 0; n < in->nb_samples; n++) {                              \
+    for (n = 0; n < in_frame->nb_samples; n++) {                        \
         const double in = src[n] * ig;                                  \
         double out = 0.;                                                \
                                                                         \
@@ -441,10 +441,9 @@ static int read_zp_coefficients(AVFilterContext *ctx, char *item_str, int nb_ite
     return 0;
 }
 
-static const char *const format[] = { "%lf", "%lf %lfi", "%lf %lfr", "%lf %lfd", "%lf %lfi" };
-
 static int read_channels(AVFilterContext *ctx, int channels, uint8_t *item_str, int ab)
 {
+    static const char *const format[] = { "%lf", "%lf %lfi", "%lf %lfr", "%lf %lfd", "%lf %lfi" };
     AudioIIRContext *s = ctx->priv;
     char *p, *arg, *old_str, *prev_arg = NULL, *saveptr = NULL;
     int i, ret;
@@ -1377,7 +1376,7 @@ static int filter_frame(AVFilterLink *inlink, AVFrame *in)
 {
     AVFilterContext *ctx = inlink->dst;
     AudioIIRContext *s = ctx->priv;
-    AVFilterLink *outlink = ctx->outputs[0];
+    AVFilterLink *outlink_0 = ctx->outputs[0];
     ThreadData td;
     AVFrame *out;
     int ch, ret;
@@ -1385,7 +1384,7 @@ static int filter_frame(AVFilterLink *inlink, AVFrame *in)
     if (av_frame_is_writable(in) && s->process != 2) {
         out = in;
     } else {
-        out = ff_get_audio_buffer(outlink, in->nb_samples);
+        out = ff_get_audio_buffer(outlink_0, in->nb_samples);
         if (!out) {
             av_frame_free(&in);
             return AVERROR(ENOMEM);
@@ -1395,9 +1394,9 @@ static int filter_frame(AVFilterLink *inlink, AVFrame *in)
 
     td.in  = in;
     td.out = out;
-    ff_filter_execute(ctx, s->iir_channel, &td, NULL, outlink->ch_layout.nb_channels);
+    ff_filter_execute(ctx, s->iir_channel, &td, NULL, outlink_0->ch_layout.nb_channels);
 
-    for (ch = 0; ch < outlink->ch_layout.nb_channels; ch++) {
+    for (ch = 0; ch < outlink_0->ch_layout.nb_channels; ch++) {
         if (s->iir[ch].clippings > 0)
             av_log(ctx, AV_LOG_WARNING, "Channel %d clipping %d times. Please reduce gain.\n",
                    ch, s->iir[ch].clippings);
@@ -1408,9 +1407,9 @@ static int filter_frame(AVFilterLink *inlink, AVFrame *in)
         av_frame_free(&in);
 
     if (s->response) {
-        AVFilterLink *outlink = ctx->outputs[1];
+        AVFilterLink *outlink_1 = ctx->outputs[1];
         int64_t old_pts = s->video->pts;
-        int64_t new_pts = av_rescale_q(out->pts, ctx->inputs[0]->time_base, outlink->time_base);
+        int64_t new_pts = av_rescale_q(out->pts, ctx->inputs[0]->time_base, outlink_1->time_base);
 
         if (new_pts > old_pts) {
             AVFrame *clone;
@@ -1419,13 +1418,13 @@ static int filter_frame(AVFilterLink *inlink, AVFrame *in)
             clone = av_frame_clone(s->video);
             if (!clone)
                 return AVERROR(ENOMEM);
-            ret = ff_filter_frame(outlink, clone);
+            ret = ff_filter_frame(outlink_1, clone);
             if (ret < 0)
                 return ret;
         }
     }
 
-    return ff_filter_frame(outlink, out);
+    return ff_filter_frame(outlink_0, out);
 }
 
 static int config_video(AVFilterLink *outlink)
