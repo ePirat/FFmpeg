@@ -718,7 +718,7 @@ extern int auto_conversion_filters;
 
 extern const AVIOInterruptCB int_cb;
 
-extern const OptionDef options[];
+extern const OptionDef ffmpeg_options[];
 extern HWDevice *filter_hw_device;
 
 extern atomic_uint nb_output_dumped;

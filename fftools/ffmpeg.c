@@ -955,14 +955,14 @@ int main(int argc, char **argv)
     setvbuf(stderr,NULL,_IONBF,0); /* win32 runtime needs this */
 
     av_log_set_flags(AV_LOG_SKIP_REPEATED);
-    parse_loglevel(argc, argv, options);
+    parse_loglevel(argc, argv, ffmpeg_options);
 
 #if CONFIG_AVDEVICE
     avdevice_register_all();
 #endif
     avformat_network_init();
 
-    show_banner(argc, argv, options);
+    show_banner(argc, argv, ffmpeg_options);
 
     sch = sch_alloc();
     if (!sch) {
