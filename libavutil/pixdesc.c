@@ -39,7 +39,7 @@ void av_read_image_line2(void *dst,
     int plane = comp.plane;
     int depth = comp.depth;
     unsigned mask  = (1ULL << depth) - 1;
-    int shift = comp.shift;
+    int cshift = comp.shift;
     int step  = comp.step;
     int flags = desc->flags;
     uint16_t *dst16 = dst;
@@ -79,8 +79,8 @@ void av_read_image_line2(void *dst,
     } else {
         const uint8_t *p = data[plane] + y * linesize[plane] +
                            x * step + comp.offset;
-        int is_8bit = shift + depth <= 8;
-        int is_16bit= shift + depth <=16;
+        int is_8bit = cshift + depth <= 8;
+        int is_16bit= cshift + depth <=16;
 
         if (is_8bit)
             p += !!(flags & AV_PIX_FMT_FLAG_BE);
@@ -90,7 +90,7 @@ void av_read_image_line2(void *dst,
             if     (is_8bit)  val = *p;
             else if(is_16bit) val = flags & AV_PIX_FMT_FLAG_BE ? AV_RB16(p) : AV_RL16(p);
             else              val = flags & AV_PIX_FMT_FLAG_BE ? AV_RB32(p) : AV_RL32(p);
-            val = (val >> shift) & mask;
+            val = (val >> cshift) & mask;
             if (read_pal_component)
                 val = data[1][4 * val + c];
             p += step;
