@@ -1107,10 +1107,10 @@ static int compute_frame_features(AudioRNNContext *s, DenoiseState *st, AVComple
         for (int j = 0; j < CEPS_MEM; j++) {
             float dist = 0.f;
             for (int k = 0; k < NB_BANDS; k++) {
-                float tmp;
+                float tmp_f;
 
-                tmp = st->cepstral_mem[i][k] - st->cepstral_mem[j][k];
-                dist += tmp*tmp;
+                tmp_f = st->cepstral_mem[i][k] - st->cepstral_mem[j][k];
+                dist += tmp_f*tmp_f;
             }
 
             if (j != i)
