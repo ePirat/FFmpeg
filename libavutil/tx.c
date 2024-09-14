@@ -863,8 +863,8 @@ av_cold int ff_tx_init_subtx(AVTXContext *s, enum AVTXType type,
                     goto end;
                 }
 
-                for (int i = 0; i < len; i++)
-                    sctx->map[i] = i;
+                for (int j = 0; j < len; j++)
+                    sctx->map[j] = j;
             } else if (opts && (opts->map_dir != sctx->map_dir)) {
                 int *tmp = av_malloc(len*sizeof(*sctx->map));
                 if (!tmp) {
@@ -874,8 +874,8 @@ av_cold int ff_tx_init_subtx(AVTXContext *s, enum AVTXType type,
 
                 memcpy(tmp, sctx->map, len*sizeof(*sctx->map));
 
-                for (int i = 0; i < len; i++)
-                    sctx->map[tmp[i]] = i;
+                for (int j = 0; j < len; j++)
+                    sctx->map[tmp[j]] = j;
 
                 av_free(tmp);
             }
