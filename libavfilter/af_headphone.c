@@ -684,13 +684,13 @@ static av_cold int init(AVFilterContext *ctx)
 
     for (i = 0; i < s->nb_hrir_inputs; i++) {
         char *name = av_asprintf("hrir%d", i);
-        AVFilterPad pad = {
+        AVFilterPad hrir_pad = {
             .name         = name,
             .type         = AVMEDIA_TYPE_AUDIO,
         };
         if (!name)
             return AVERROR(ENOMEM);
-        if ((ret = ff_append_inpad_free_name(ctx, &pad)) < 0)
+        if ((ret = ff_append_inpad_free_name(ctx, &hrir_pad)) < 0)
             return ret;
     }
 
