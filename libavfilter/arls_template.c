@@ -87,8 +87,8 @@ static ftype fn(process_sample)(AudioRLSContext *s, ftype input, ftype desired, 
         const int ikernel_size = i * kernel_size;
 
         u[i] = ZERO;
-        for (int k = 0, pos = offset; k < order; k++, pos++)
-            u[i] += p[ikernel_size + k] * delay[pos];
+        for (int k = 0, pos2 = offset; k < order; k++, pos2++)
+            u[i] += p[ikernel_size + k] * delay[pos2];
 
         g += u[i] * delay[pos];
     }
