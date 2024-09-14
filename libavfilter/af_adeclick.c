@@ -448,9 +448,9 @@ static int detect_clips(AudioDeclickContext *s, DeclickChannel *c,
     memset(histogram, 0, sizeof(*histogram) * s->nb_hbins);
 
     for (i = 0; i < s->window_size; i++) {
-        const unsigned index = fmin(fabs(src[i]), 1) * (s->nb_hbins - 1);
+        const unsigned idx = fmin(fabs(src[i]), 1) * (s->nb_hbins - 1);
 
-        histogram[index]++;
+        histogram[idx]++;
         dst[i] = src[i];
         clip[i] = 0;
     }
