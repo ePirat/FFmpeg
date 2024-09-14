@@ -42,12 +42,12 @@ static const AVOption acontrast_options[] = {
 
 AVFILTER_DEFINE_CLASS(acontrast);
 
-static void filter_flt(void **d, const void **s,
+static void filter_flt(void **out_data, const void **s,
                        int nb_samples, int channels,
                        float contrast)
 {
     const float *src = s[0];
-    float *dst = d[0];
+    float *dst = out_data[0];
     int n, c;
 
     for (n = 0; n < nb_samples; n++) {
@@ -62,12 +62,12 @@ static void filter_flt(void **d, const void **s,
     }
 }
 
-static void filter_dbl(void **d, const void **s,
+static void filter_dbl(void **out_data, const void **s,
                        int nb_samples, int channels,
                        float contrast)
 {
     const double *src = s[0];
-    double *dst = d[0];
+    double *dst = out_data[0];
     int n, c;
 
     for (n = 0; n < nb_samples; n++) {
@@ -82,7 +82,7 @@ static void filter_dbl(void **d, const void **s,
     }
 }
 
-static void filter_fltp(void **d, const void **s,
+static void filter_fltp(void **out_data, const void **s,
                         int nb_samples, int channels,
                         float contrast)
 {
@@ -90,7 +90,7 @@ static void filter_fltp(void **d, const void **s,
 
     for (c = 0; c < channels; c++) {
         const float *src = s[c];
-        float *dst = d[c];
+        float *dst = out_data[c];
 
         for (n = 0; n < nb_samples; n++) {
             float d = src[n] * M_PI_2;
@@ -100,7 +100,7 @@ static void filter_fltp(void **d, const void **s,
     }
 }
 
-static void filter_dblp(void **d, const void **s,
+static void filter_dblp(void **out_data, const void **s,
                         int nb_samples, int channels,
                         float contrast)
 {
@@ -108,7 +108,7 @@ static void filter_dblp(void **d, const void **s,
 
     for (c = 0; c < channels; c++) {
         const double *src = s[c];
-        double *dst = d[c];
+        double *dst = out_data[c];
 
         for (n = 0; n < nb_samples; n++) {
             double d = src[n] * M_PI_2;
