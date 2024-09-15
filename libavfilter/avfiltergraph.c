@@ -511,7 +511,7 @@ static int query_formats(AVFilterGraph *graph, void *log_ctx)
 
             if (convert_needed) {
                 AVFilterContext *convert;
-                const AVFilter *filter;
+                const AVFilter *conv_filter;
                 AVFilterLink *inlink, *outlink;
                 char inst_name[30];
                 const char *opts;
@@ -525,7 +525,7 @@ static int query_formats(AVFilterGraph *graph, void *log_ctx)
                 }
 
                 /* couldn't merge format lists. auto-insert conversion filter */
-                if (!(filter = avfilter_get_by_name(neg->conversion_filter))) {
+                if (!(conv_filter = avfilter_get_by_name(neg->conversion_filter))) {
                     av_log(log_ctx, AV_LOG_ERROR,
                            "'%s' filter not present, cannot convert formats.\n",
                            neg->conversion_filter);
@@ -534,7 +534,7 @@ static int query_formats(AVFilterGraph *graph, void *log_ctx)
                 snprintf(inst_name, sizeof(inst_name), "auto_%s_%d",
                          neg->conversion_filter, converter_count++);
                 opts = FF_FIELD_AT(char *, neg->conversion_opts_offset, *graph);
-                ret = avfilter_graph_create_filter(&convert, filter, inst_name, opts, NULL, graph);
+                ret = avfilter_graph_create_filter(&convert, conv_filter, inst_name, opts, NULL, graph);
                 if (ret < 0)
                     return ret;
                 if ((ret = avfilter_insert_filter(link, convert, 0, 0)) < 0)
