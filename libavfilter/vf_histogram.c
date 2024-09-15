@@ -495,7 +495,7 @@ static int filter_frame(AVFilterLink *inlink, AVFrame *in)
                 }
             }
 
-            for (int i = 0; i < s->histogram_size; i++) {
+            for (i = 0; i < s->histogram_size; i++) {
                 int idx = s->histogram_size - i - 1;
                 int value = s->start[p];
 
