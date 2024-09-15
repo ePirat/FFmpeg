@@ -98,8 +98,8 @@ static int monochrome_slice8(AVFilterContext *ctx, void *arg, int jobnr, int nb_
     const float b = s->b * .5f;
     const float r = s->r * .5f;
 
-    for (int y = slice_start; y < slice_end; y++) {
-        const int cy = y >> subh;
+    for (int slice_y = slice_start; slice_y < slice_end; slice_y++) {
+        const int cy = slice_y >> subh;
         uint8_t *uptr = frame->data[1] + cy * ulinesize;
         uint8_t *vptr = frame->data[2] + cy * vlinesize;
 
@@ -137,8 +137,8 @@ static int monochrome_slice16(AVFilterContext *ctx, void *arg, int jobnr, int nb
     const float b = s->b * .5f;
     const float r = s->r * .5f;
 
-    for (int y = slice_start; y < slice_end; y++) {
-        const int cy = y >> subh;
+    for (int slice_y = slice_start; slice_y < slice_end; slice_y++) {
+        const int cy = slice_y >> subh;
         uint16_t *uptr = (uint16_t *)frame->data[1] + cy * ulinesize;
         uint16_t *vptr = (uint16_t *)frame->data[2] + cy * vlinesize;
 
