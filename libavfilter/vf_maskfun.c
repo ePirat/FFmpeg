@@ -90,7 +90,7 @@ static int filter_frame(AVFilterLink *inlink, AVFrame *in)
     AVFrame *out;
 
     if (s->getsum(ctx, in)) {
-        AVFrame *out = av_frame_clone(s->empty);
+        out = av_frame_clone(s->empty);
 
         if (!out) {
             av_frame_free(&in);
