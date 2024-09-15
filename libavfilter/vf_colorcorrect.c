@@ -336,7 +336,7 @@ static int colorcorrect_slice8(AVFilterContext *ctx, void *arg, int jobnr, int n
     const float bd = s->bh - bl;
     const float rd = s->rh - rl;
 
-    for (int y = slice_start; y < slice_end; y++) {
+    for (int slice_y = slice_start; slice_y < slice_end; slice_y++) {
         for (int x = 0; x < width; x++) {
             PROCESS()
 
@@ -377,7 +377,7 @@ static int colorcorrect_slice16(AVFilterContext *ctx, void *arg, int jobnr, int 
     const float bd = s->bh - bl;
     const float rd = s->rh - rl;
 
-    for (int y = slice_start; y < slice_end; y++) {
+    for (int slice_y = slice_start; slice_y < slice_end; slice_y++) {
         for (int x = 0; x < width; x++) {
             PROCESS()
 
