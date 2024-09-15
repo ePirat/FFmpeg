@@ -188,7 +188,6 @@ static int config_input(AVFilterLink *inlink)
     FFTdnoizContext *s = ctx->priv;
     float lut[MAX_BLOCK + 1];
     float overlap;
-    int i;
 
     desc = av_pix_fmt_desc_get(inlink->format);
     s->depth = desc->comp[0].depth;
@@ -224,7 +223,7 @@ static int config_input(AVFilterLink *inlink)
             return ret;
     }
 
-    for (i = 0; i < s->nb_planes; i++) {
+    for (int i = 0; i < s->nb_planes; i++) {
         PlaneContext *p = &s->planes[i];
         int size;
 
