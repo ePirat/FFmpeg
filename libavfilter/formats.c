@@ -60,7 +60,7 @@ do {                                                                       \
  */
 #define MERGE_FORMATS(a, b, fmts, nb, type, check, empty_allowed)          \
 do {                                                                       \
-    int i, j, k = 0, skip = 0;                                             \
+    int skip = 0;                                                          \
                                                                            \
     if (empty_allowed) {                                                   \
         if (!a->nb || !b->nb) {                                            \
@@ -72,8 +72,9 @@ do {                                                                       \
         }                                                                  \
     }                                                                      \
     if (!skip) {                                                           \
-        for (i = 0; i < a->nb; i++)                                        \
-            for (j = 0; j < b->nb; j++)                                    \
+        int k = 0;                                                         \
+        for (int i = 0; i < a->nb; i++)                                    \
+            for (int j = 0; j < b->nb; j++)                                \
                 if (a->fmts[i] == b->fmts[j]) {                            \
                     if (check)                                             \
                         return 1;                                          \
@@ -94,7 +95,6 @@ do {                                                                       \
 static int merge_formats_internal(AVFilterFormats *a, AVFilterFormats *b,
                                   enum AVMediaType type, int check)
 {
-    int i, j;
     int alpha1=0, alpha2=0;
     int chroma1=0, chroma2=0;
 
@@ -111,9 +111,9 @@ static int merge_formats_internal(AVFilterFormats *a, AVFilterFormats *b,
        To avoid that, pretend that there are no common formats to force the
        insertion of a conversion filter. */
     if (type == AVMEDIA_TYPE_VIDEO)
-        for (i = 0; i < a->nb_formats; i++) {
+        for (int i = 0; i < a->nb_formats; i++) {
             const AVPixFmtDescriptor *const adesc = av_pix_fmt_desc_get(a->formats[i]);
-            for (j = 0; j < b->nb_formats; j++) {
+            for (int j = 0; j < b->nb_formats; j++) {
                 const AVPixFmtDescriptor *bdesc = av_pix_fmt_desc_get(b->formats[j]);
                 alpha2 |= adesc->flags & bdesc->flags & AV_PIX_FMT_FLAG_ALPHA;
                 chroma2|= adesc->nb_components > 1 && bdesc->nb_components > 1;
@@ -215,7 +215,7 @@ static int merge_channel_layouts_internal(AVFilterChannelLayouts *a,
     AVChannelLayout *channel_layouts = NULL;
     unsigned a_all = a->all_layouts + a->all_counts;
     unsigned b_all = b->all_layouts + b->all_counts;
-    int ret_max, ret_nb = 0, i, j, round;
+    int ret_max, ret_nb = 0;
 
     av_assert2(a->refcount && b->refcount);
 
@@ -229,7 +229,8 @@ static int merge_channel_layouts_internal(AVFilterChannelLayouts *a,
     if (a_all) {
         if (a_all == 1 && !b_all) {
             /* keep only known layouts in b; works also for b_all = 1 */
-            for (i = j = 0; i < b->nb_channel_layouts; i++)
+            int j = 0;
+            for (int i = 0; i < b->nb_channel_layouts; i++)
                 if (KNOWN(&b->channel_layouts[i]) && i != j++) {
                     if (check)
                         return 1;
@@ -250,10 +251,10 @@ static int merge_channel_layouts_internal(AVFilterChannelLayouts *a,
         return AVERROR(ENOMEM);
 
     /* a[known] intersect b[known] */
-    for (i = 0; i < a->nb_channel_layouts; i++) {
+    for (int i = 0; i < a->nb_channel_layouts; i++) {
         if (!KNOWN(&a->channel_layouts[i]))
             continue;
-        for (j = 0; j < b->nb_channel_layouts; j++) {
+        for (int j = 0; j < b->nb_channel_layouts; j++) {
             if (!av_channel_layout_compare(&a->channel_layouts[i], &b->channel_layouts[j])) {
                 if (check)
                     return 1;
@@ -266,13 +267,13 @@ static int merge_channel_layouts_internal(AVFilterChannelLayouts *a,
     }
     /* 1st round: a[known] intersect b[generic]
        2nd round: a[generic] intersect b[known] */
-    for (round = 0; round < 2; round++) {
-        for (i = 0; i < a->nb_channel_layouts; i++) {
+    for (int round = 0; round < 2; round++) {
+        for (int i = 0; i < a->nb_channel_layouts; i++) {
             AVChannelLayout *fmt = &a->channel_layouts[i], bfmt = { 0 };
             if (!av_channel_layout_check(fmt) || !KNOWN(fmt))
                 continue;
             bfmt = FF_COUNT2LAYOUT(fmt->nb_channels);
-            for (j = 0; j < b->nb_channel_layouts; j++)
+            for (int j = 0; j < b->nb_channel_layouts; j++)
                 if (!av_channel_layout_compare(&b->channel_layouts[j], &bfmt)) {
                     if (check)
                         return 1;
@@ -283,10 +284,10 @@ static int merge_channel_layouts_internal(AVFilterChannelLayouts *a,
         FFSWAP(AVFilterChannelLayouts *, a, b);
     }
     /* a[generic] intersect b[generic] */
-    for (i = 0; i < a->nb_channel_layouts; i++) {
+    for (int i = 0; i < a->nb_channel_layouts; i++) {
         if (KNOWN(&a->channel_layouts[i]))
             continue;
-        for (j = 0; j < b->nb_channel_layouts; j++)
+        for (int j = 0; j < b->nb_channel_layouts; j++)
             if (!av_channel_layout_compare(&a->channel_layouts[i], &b->channel_layouts[j])) {
                 if (check)
                     return 1;
