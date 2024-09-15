@@ -291,7 +291,7 @@ static void drawline(AVFrame *pic, int x, int y, int len, int step)
 
 static int config_video_output(AVFilterLink *outlink)
 {
-    int i, x, y;
+    int i, x;
     uint8_t *p;
     FilterLink *l = ff_filter_link(outlink);
     AVFilterContext *ctx = outlink->src;
@@ -353,7 +353,7 @@ static int config_video_output(AVFilterLink *outlink)
     /* draw LU legends */
     drawtext(outpicref, PAD, PAD+16, FONT8, font_colors+3, " LU");
     for (i = ebur128->meter; i >= -ebur128->meter * 2; i--) {
-        y = lu_to_y(ebur128, i);
+        int y = lu_to_y(ebur128, i);
         x = PAD + (i < 10 && i > -10) * 8;
         ebur128->y_line_ref[y] = i;
         y -= 4; // -4 to center vertically
@@ -367,7 +367,7 @@ static int config_video_output(AVFilterLink *outlink)
     ebur128->y_opt_min = lu_to_y(ebur128, -1);
     p = outpicref->data[0] + ebur128->graph.y * outpicref->linesize[0]
                            + ebur128->graph.x * 3;
-    for (y = 0; y < ebur128->graph.h; y++) {
+    for (int y = 0; y < ebur128->graph.h; y++) {
         const uint8_t *c = get_graph_color(ebur128, INT_MAX, y);
 
         for (x = 0; x < ebur128->graph.w; x++)
@@ -628,7 +628,7 @@ static int gate_update(struct integrator *integ, double power,
 
 static int filter_frame(AVFilterLink *inlink, AVFrame *insamples)
 {
-    int i, ch, idx_insample, ret;
+    int i, idx_insample;
     AVFilterContext *ctx = inlink->dst;
     EBUR128Context *ebur128 = ctx->priv;
     const int nb_channels = ebur128->nb_channels;
@@ -643,10 +643,10 @@ static int filter_frame(AVFilterLink *inlink, AVFrame *insamples)
                               (const uint8_t **)insamples->data, nb_samples);
         if (ret < 0)
             return ret;
-        for (ch = 0; ch < nb_channels; ch++)
+        for (int ch = 0; ch < nb_channels; ch++)
             ebur128->true_peaks_per_frame[ch] = 0.0;
         for (idx_insample = 0; idx_insample < ret; idx_insample++) {
-            for (ch = 0; ch < nb_channels; ch++) {
+            for (int ch = 0; ch < nb_channels; ch++) {
                 ebur128->true_peaks[ch] = FFMAX(ebur128->true_peaks[ch], fabs(*swr_samples));
                 ebur128->true_peaks_per_frame[ch] = FFMAX(ebur128->true_peaks_per_frame[ch],
                                                           fabs(*swr_samples));
@@ -672,7 +672,7 @@ static int filter_frame(AVFilterLink *inlink, AVFrame *insamples)
         MOVE_TO_NEXT_CACHED_ENTRY(400);
         MOVE_TO_NEXT_CACHED_ENTRY(3000);
 
-        for (ch = 0; ch < nb_channels; ch++) {
+        for (int ch = 0; ch < nb_channels; ch++) {
             double bin;
 
             if (ebur128->peak_mode & PEAK_MODE_SAMPLES_PEAKS)
@@ -712,11 +712,9 @@ static int filter_frame(AVFilterLink *inlink, AVFrame *insamples)
         }
 
 #define FIND_PEAK(global, sp, ptype) do {                        \
-    int ch;                                                      \
-    double maxpeak;                                              \
-    maxpeak = 0.0;                                               \
+    double maxpeak  = 0.0;                                       \
     if (ebur128->peak_mode & PEAK_MODE_ ## ptype ## _PEAKS) {    \
-        for (ch = 0; ch < ebur128->nb_channels; ch++)            \
+        for (int ch = 0; ch < ebur128->nb_channels; ch++)        \
             maxpeak = FFMAX(maxpeak, sp[ch]);                    \
         global = DBFS(maxpeak);                                  \
     }                                                            \
@@ -741,7 +739,7 @@ static int filter_frame(AVFilterLink *inlink, AVFrame *insamples)
 #define COMPUTE_LOUDNESS(m, time) do {                                              \
     if (ebur128->i##time.filled) {                                                  \
         /* weighting sum of the last <time> ms */                                   \
-        for (ch = 0; ch < nb_channels; ch++)                                        \
+        for (int ch = 0; ch < nb_channels; ch++)                                    \
             power_##time += ebur128->ch_weighting[ch] * ebur128->i##time.sum[ch];   \
         power_##time /= I##time##_BINS(inlink->sample_rate);                        \
     }                                                                               \
@@ -831,7 +829,7 @@ static int filter_frame(AVFilterLink *inlink, AVFrame *insamples)
             /* push one video frame */
             if (ebur128->do_video) {
                 AVFrame *clone;
-                int x, y;
+                int x, y, ret;
                 uint8_t *p;
                 double gauge_value;
                 int y_loudness_lu_graph, y_loudness_lu_gauge;
@@ -909,7 +907,7 @@ static int filter_frame(AVFilterLink *inlink, AVFrame *insamples)
     if (ebur128->peak_mode & PEAK_MODE_ ## ptype ## _PEAKS) {               \
         double max_peak = 0.0;                                              \
         char key[64];                                                       \
-        for (ch = 0; ch < nb_channels; ch++) {                              \
+        for (int ch = 0; ch < nb_channels; ch++) {                          \
             snprintf(key, sizeof(key),                                      \
                      META_PREFIX AV_STRINGIFY(name) "_peaks_ch%d", ch);     \
             max_peak = fmax(max_peak, ebur128->name##_peaks[ch]);           \
@@ -948,7 +946,7 @@ static int filter_frame(AVFilterLink *inlink, AVFrame *insamples)
 #define PRINT_PEAKS(str, sp, ptype) do {                            \
     if (ebur128->peak_mode & PEAK_MODE_ ## ptype ## _PEAKS) {       \
         av_log(ctx, ebur128->loglevel, "  " str ":");               \
-        for (ch = 0; ch < nb_channels; ch++)                        \
+        for (int ch = 0; ch < nb_channels; ch++)                        \
             av_log(ctx, ebur128->loglevel, " %5.1f", DBFS(sp[ch])); \
         av_log(ctx, ebur128->loglevel, " dBFS");                    \
     }                                                               \
