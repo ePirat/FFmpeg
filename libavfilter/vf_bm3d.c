@@ -403,11 +403,11 @@ static void basic_block_filtering(BM3DContext *s, const uint8_t *src, int src_li
     int retained = 0;
 
     for (int k = 0; k < nb_match_blocks; k++) {
-        const int y = sc->match_blocks[k].y;
-        const int x = sc->match_blocks[k].x;
+        const int b_y = sc->match_blocks[k].y;
+        const int b_x = sc->match_blocks[k].x;
 
         for (int i = 0; i < block_size; i++) {
-            s->get_block_row(src, src_linesize, y + i, x, block_size, bufferh + pblock_size * i);
+            s->get_block_row(src, src_linesize, b_y + i, b_x, block_size, bufferh + pblock_size * i);
             sc->tx_fn(sc->dctf, buffert, bufferh + pblock_size * i, sizeof(float));
             for (int j = 0; j < block_size; j++)
                 bufferv[j * pblock_size + i] = buffert[j];
@@ -520,12 +520,12 @@ static void final_block_filtering(BM3DContext *s, const uint8_t *src, int src_li
     float l2_wiener = 0;
 
     for (int k = 0; k < nb_match_blocks; k++) {
-        const int y = sc->match_blocks[k].y;
-        const int x = sc->match_blocks[k].x;
+        const int b_y = sc->match_blocks[k].y;
+        const int b_x = sc->match_blocks[k].x;
 
         for (int i = 0; i < block_size; i++) {
-            s->get_block_row(src, src_linesize, y + i, x, block_size, bufferh + pblock_size * i);
-            s->get_block_row(ref, ref_linesize, y + i, x, block_size, rbufferh + pblock_size * i);
+            s->get_block_row(src, src_linesize, b_y + i, b_x, block_size, bufferh + pblock_size * i);
+            s->get_block_row(ref, ref_linesize, b_y + i, b_x, block_size, rbufferh + pblock_size * i);
             sc->tx_fn(sc->dctf, bufferh + pblock_size * i, bufferh + pblock_size * i, sizeof(float));
             sc->tx_fn(sc->dctf, rbufferh + pblock_size * i, rbufferh + pblock_size * i, sizeof(float));
         }
@@ -796,13 +796,13 @@ static int config_input(AVFilterLink *inlink)
             return ret;
 
         if (s->group_size > 1) {
-            float iscale = 0.5f / s->group_size;
+            float l_iscale = 0.5f / s->group_size;
 
             ret = av_tx_init(&sc->gdctf, &sc->tx_fn_g, AV_TX_FLOAT_DCT, 0, s->group_size >> 0, &scale, 0);
             if (ret < 0)
                 return ret;
 
-            ret = av_tx_init(&sc->gdcti, &sc->itx_fn_g, AV_TX_FLOAT_DCT, 1, s->group_size >> 1, &iscale, 0);
+            ret = av_tx_init(&sc->gdcti, &sc->itx_fn_g, AV_TX_FLOAT_DCT, 1, s->group_size >> 1, &l_iscale, 0);
             if (ret < 0)
                 return ret;
         }
