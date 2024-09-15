@@ -378,9 +378,9 @@ static int config_output(AVFilterLink *outlink)
     s->fs.on_event = process_frame;
 
     for (i = 0; i < s->nb_inputs; i++) {
-        AVFilterLink *inlink = ctx->inputs[i];
+        AVFilterLink *iinlink = ctx->inputs[i];
 
-        in[i].time_base = inlink->time_base;
+        in[i].time_base = iinlink->time_base;
         in[i].sync   = 1;
         in[i].before = EXT_STOP;
         in[i].after  = (s->duration == 1 || (s->duration == 2 && i == 0)) ? EXT_STOP : EXT_INFINITY;
