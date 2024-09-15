@@ -367,18 +367,18 @@ static inline int selective_color_##nbits(AVFilterContext *ctx, ThreadData *td, 
                 const struct process_range *pr = &s->process_ranges[i];                                 \
                                                                                                         \
                 if (range_flag & pr->mask) {                                                            \
-                    const int scale = pr->get_scale(r, g, b, min_color, max_color);                     \
+                    const int pr_scale = pr->get_scale(r, g, b, min_color, max_color);                  \
                                                                                                         \
-                    if (scale > 0) {                                                                    \
+                    if (pr_scale > 0) {                                                                 \
                         const float *cmyk_adjust = s->cmyk_adjust[pr->range_id];                        \
                         const float adj_c = cmyk_adjust[0];                                             \
                         const float adj_m = cmyk_adjust[1];                                             \
                         const float adj_y = cmyk_adjust[2];                                             \
                         const float k = cmyk_adjust[3];                                                 \
                                                                                                         \
-                        adjust_r += comp_adjust(scale, rnorm, adj_c, k, correction_method);             \
-                        adjust_g += comp_adjust(scale, gnorm, adj_m, k, correction_method);             \
-                        adjust_b += comp_adjust(scale, bnorm, adj_y, k, correction_method);             \
+                        adjust_r += comp_adjust(pr_scale, rnorm, adj_c, k, correction_method);          \
+                        adjust_g += comp_adjust(pr_scale, gnorm, adj_m, k, correction_method);          \
+                        adjust_b += comp_adjust(pr_scale, bnorm, adj_y, k, correction_method);          \
                     }                                                                                   \
                 }                                                                                       \
             }                                                                                           \
