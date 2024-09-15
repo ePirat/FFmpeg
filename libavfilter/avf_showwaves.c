@@ -568,8 +568,8 @@ inline static int push_frame(AVFilterLink *outlink, int i, int64_t pts)
     ret = ff_filter_frame(outlink, showwaves->outpicref);
     showwaves->outpicref = NULL;
     showwaves->buf_idx = 0;
-    for (int i = 0; i < nb_channels; i++)
-        showwaves->buf_idy[i] = 0;
+    for (int j = 0; j < nb_channels; j++)
+        showwaves->buf_idy[j] = 0;
     return ret;
 }
 
