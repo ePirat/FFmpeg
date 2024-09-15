@@ -98,10 +98,9 @@ AVFILTER_DEFINE_CLASS(showvolume);
 static av_cold int init(AVFilterContext *ctx)
 {
     ShowVolumeContext *s = ctx->priv;
-    int ret;
 
     if (s->color) {
-        ret = av_expr_parse(&s->c_expr, s->color, var_names,
+        int ret = av_expr_parse(&s->c_expr, s->color, var_names,
                             NULL, NULL, NULL, NULL, 0, ctx);
         if (ret < 0)
             return ret;
@@ -189,7 +188,6 @@ static int config_output(AVFilterLink *outlink)
     FilterLink        *l = ff_filter_link(outlink);
     ShowVolumeContext *s = outlink->src->priv;
     AVFilterLink *inlink = outlink->src->inputs[0];
-    int ch;
 
     if (s->orientation) {
         outlink->h = s->w;
@@ -203,10 +201,8 @@ static int config_output(AVFilterLink *outlink)
     l->frame_rate = s->frame_rate;
     outlink->time_base = av_inv_q(l->frame_rate);
 
-    for (ch = 0; ch < inlink->ch_layout.nb_channels; ch++) {
-        int i;
-
-        for (i = 0; i < s->w; i++) {
+    for (int ch = 0; ch < inlink->ch_layout.nb_channels; ch++) {
+        for (int i = 0; i < s->w; i++) {
             float max = i / (float)(s->w - 1);
 
             s->values[ch * VAR_VARS_NB + VAR_PEAK] = max;
@@ -221,13 +217,10 @@ static int config_output(AVFilterLink *outlink)
 
 static void drawtext(AVFrame *pic, int x, int y, const char *txt, int o)
 {
-    const uint8_t *font;
-    int font_height;
-    int i;
+    const uint8_t *font = avpriv_cga_font;
+    int font_height = 8;
 
-    font = avpriv_cga_font,   font_height =  8;
-
-    for (i = 0; txt[i]; i++) {
+    for (int i = 0; txt[i]; i++) {
         int char_y, mask;
 
         if (o) { /* vertical orientation */
@@ -255,12 +248,11 @@ static void drawtext(AVFrame *pic, int x, int y, const char *txt, int o)
 
 static void clear_picture(ShowVolumeContext *s, AVFilterLink *outlink)
 {
-    int i, j;
     const uint32_t bg = (uint32_t)(s->bgopacity * 255) << 24;
 
-    for (i = 0; i < outlink->h; i++) {
+    for (int i = 0; i < outlink->h; i++) {
         uint32_t *dst = (uint32_t *)(s->out->data[0] + i * s->out->linesize[0]);
-        for (j = 0; j < outlink->w; j++)
+        for (int j = 0; j < outlink->w; j++)
             AV_WN32A(dst + j, bg);
     }
 }
@@ -293,14 +285,13 @@ static inline void calc_persistent_max(ShowVolumeContext *s, float max, int chan
 
 static inline void draw_max_line(ShowVolumeContext *s, int max_draw, int channel)
 {
-    int k;
     if (s->orientation) { /* vertical */
         uint8_t *dst = s->out->data[0] + max_draw * s->out->linesize[0] + channel * (s->b + s->h) * 4;
-        for (k = 0; k < s->h; k++) {
+        for (int k = 0; k < s->h; k++) {
             memcpy(dst + k * 4, s->persistant_max_rgba, sizeof(s->persistant_max_rgba));
         }
     } else { /* horizontal */
-        for (k = 0; k < s->h; k++) {
+        for (int k = 0; k < s->h; k++) {
             uint8_t *dst = s->out->data[0] + (channel * s->h + channel * s->b + k) * s->out->linesize[0];
             memcpy(dst + max_draw * 4, s->persistant_max_rgba, sizeof(s->persistant_max_rgba));
         }
@@ -313,8 +304,7 @@ static int filter_frame(AVFilterLink *inlink, AVFrame *insamples)
     AVFilterLink *outlink = ctx->outputs[0];
     ShowVolumeContext *s = ctx->priv;
     const int step = s->step;
-    int c, j, k, max_draw, ret;
-    char channel_name[64];
+    int max_draw, ret;
     AVFrame *out;
 
     if (!s->out || s->out->width  != outlink->w ||
@@ -331,11 +321,11 @@ static int filter_frame(AVFilterLink *inlink, AVFrame *insamples)
     s->out->duration = 1;
 
     if ((s->f < 1.) && (s->f > 0.)) {
-        for (j = 0; j < outlink->h; j++) {
+        for (int j = 0; j < outlink->h; j++) {
             uint8_t *dst = s->out->data[0] + j * s->out->linesize[0];
             const uint32_t alpha = s->bgopacity * 255;
 
-            for (k = 0; k < outlink->w; k++) {
+            for (int k = 0; k < outlink->w; k++) {
                 dst[k * 4 + 0] = FFMAX(dst[k * 4 + 0] * s->f, 0);
                 dst[k * 4 + 1] = FFMAX(dst[k * 4 + 1] * s->f, 0);
                 dst[k * 4 + 2] = FFMAX(dst[k * 4 + 2] * s->f, 0);
@@ -347,7 +337,7 @@ static int filter_frame(AVFilterLink *inlink, AVFrame *insamples)
     }
 
     if (s->orientation) { /* vertical */
-        for (c = 0; c < inlink->ch_layout.nb_channels; c++) {
+        for (int c = 0; c < inlink->ch_layout.nb_channels; c++) {
             float *src = (float *)insamples->extended_data[c];
             uint32_t *lut = s->color_lut + s->w * c;
             float max;
@@ -359,9 +349,9 @@ static int filter_frame(AVFilterLink *inlink, AVFrame *insamples)
             max = av_clipf(max, 0, 1);
             max_draw = calc_max_draw(s, outlink, max);
 
-            for (j = s->w - 1; j >= max_draw; j--) {
+            for (int j = s->w - 1; j >= max_draw; j--) {
                 uint8_t *dst = s->out->data[0] + j * s->out->linesize[0] + c * (s->b + s->h) * 4;
-                for (k = 0; k < s->h; k++) {
+                for (int k = 0; k < s->h; k++) {
                     AV_WN32A(&dst[k * 4], lut[s->w - j - 1]);
                 }
                 if (j & step)
@@ -375,7 +365,7 @@ static int filter_frame(AVFilterLink *inlink, AVFrame *insamples)
             }
         }
     } else { /* horizontal */
-        for (c = 0; c < inlink->ch_layout.nb_channels; c++) {
+        for (int c = 0; c < inlink->ch_layout.nb_channels; c++) {
             float *src = (float *)insamples->extended_data[c];
             uint32_t *lut = s->color_lut + s->w * c;
             float max;
@@ -387,10 +377,10 @@ static int filter_frame(AVFilterLink *inlink, AVFrame *insamples)
             max = av_clipf(max, 0, 1);
             max_draw = calc_max_draw(s, outlink, max);
 
-            for (j = 0; j < s->h; j++) {
+            for (int j = 0; j < s->h; j++) {
                 uint8_t *dst = s->out->data[0] + (c * s->h + c * s->b + j) * s->out->linesize[0];
 
-                for (k = 0; k < max_draw; k++) {
+                for (int k = 0; k < max_draw; k++) {
                     AV_WN32A(dst + k * 4, lut[k]);
                     if (k & step)
                         k += step;
@@ -416,7 +406,8 @@ static int filter_frame(AVFilterLink *inlink, AVFrame *insamples)
     }
 
     /* draw channel names */
-    for (c = 0; c < inlink->ch_layout.nb_channels && s->h >= 10 && s->draw_text; c++) {
+    for (int c = 0; c < inlink->ch_layout.nb_channels && s->h >= 10 && s->draw_text; c++) {
+        char channel_name[64];
         if (s->orientation) { /* vertical */
             ret = av_channel_name(channel_name, sizeof(channel_name), av_channel_layout_channel_from_index(&inlink->ch_layout, c));
             if (ret < 0)
@@ -431,7 +422,7 @@ static int filter_frame(AVFilterLink *inlink, AVFrame *insamples)
     }
 
     /* draw volume level */
-    for (c = 0; c < inlink->ch_layout.nb_channels && s->h >= 8 && s->draw_volume; c++) {
+    for (int c = 0; c < inlink->ch_layout.nb_channels && s->h >= 8 && s->draw_volume; c++) {
         char buf[16];
 
         if (s->orientation) { /* vertical */
