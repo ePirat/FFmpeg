@@ -103,22 +103,22 @@ static int distance ## _slice##name(AVFilterContext *ctx, void *arg,            
     type *out_vptr = (type *)(out->data[2] + slice_start * out_vlinesize);               \
                                                                                          \
     {                                                                                    \
-        const int h = s->planeheight[0];                                                 \
-        const int slice_start = (h * jobnr) / nb_jobs;                                   \
-        const int slice_end = (h * (jobnr+1)) / nb_jobs;                                 \
+        const int h0 = s->planeheight[0];                                                \
+        const int slice_start0 = (h0 * jobnr) / nb_jobs;                                 \
+        const int slice_end0 = (h0 * (jobnr+1)) / nb_jobs;                               \
                                                                                          \
-        av_image_copy_plane(out->data[0] + slice_start * out->linesize[0],               \
+        av_image_copy_plane(out->data[0] + slice_start0 * out->linesize[0],              \
                             out->linesize[0],                                            \
-                            in->data[0] + slice_start * in->linesize[0],                 \
+                            in->data[0] + slice_start0 * in->linesize[0],                \
                             in->linesize[0],                                             \
-                            s->linesize[0], slice_end - slice_start);                    \
+                            s->linesize[0], slice_end0 - slice_start0);                  \
                                                                                          \
         if (s->nb_planes == 4) {                                                         \
-            av_image_copy_plane(out->data[3] + slice_start * out->linesize[3],           \
+            av_image_copy_plane(out->data[3] + slice_start0 * out->linesize[3],          \
                                 out->linesize[3],                                        \
-                                in->data[3] + slice_start * in->linesize[3],             \
+                                in->data[3] + slice_start0 * in->linesize[3],            \
                                 in->linesize[3],                                         \
-                                s->linesize[3], slice_end - slice_start);                \
+                                s->linesize[3], slice_end0 - slice_start0);              \
         }                                                                                \
     }                                                                                    \
                                                                                          \
@@ -140,14 +140,14 @@ static int distance ## _slice##name(AVFilterContext *ctx, void *arg,            
             int cn = 1;                                                                  \
                                                                                          \
             for (int yy = yystart; yy <= yystop; yy += steph) {                          \
-                const type *in_yptr = (const type *)(in->data[0] + yy * chroma_h * in_ylinesize); \
-                const type *in_uptr = (const type *)(in->data[1] + yy * in_ulinesize);            \
-                const type *in_vptr = (const type *)(in->data[2] + yy * in_vlinesize);            \
+                const type *in_yptr2 = (const type *)(in->data[0] + yy * chroma_h * in_ylinesize); \
+                const type *in_uptr2 = (const type *)(in->data[1] + yy * in_ulinesize);            \
+                const type *in_vptr2 = (const type *)(in->data[2] + yy * in_vlinesize);            \
                                                                                                   \
                 for (int xx = xxstart; xx <= xxstop; xx += stepw) {                    \
-                    const ctype Y = in_yptr[xx * chroma_w];                            \
-                    const ctype U = in_uptr[xx];                                       \
-                    const ctype V = in_vptr[xx];                                       \
+                    const ctype Y = in_yptr2[xx * chroma_w];                            \
+                    const ctype U = in_uptr2[xx];                                       \
+                    const ctype V = in_vptr2[xx];                                       \
                     const ctype cyY = FFABS(cy - Y);                                   \
                     const ctype cuU = FFABS(cu - U);                                   \
                     const ctype cvV = FFABS(cv - V);                                   \
