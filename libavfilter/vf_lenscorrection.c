@@ -79,7 +79,7 @@ static int filter##name##_slice(AVFilterContext *ctx, void *arg, int job,      \
     LenscorrectionCtx *rect = ctx->priv;                                       \
     ThreadData *td = arg;                                                      \
     AVFrame *in = td->in;                                                      \
-    AVFrame *out = td->out;                                                    \
+    AVFrame *outf = td->out;                                                   \
                                                                                \
     const int32_t *correction = rect->correction[plane];                       \
     const int fill_color = rect->fill_color[plane];                            \
@@ -89,9 +89,9 @@ static int filter##name##_slice(AVFilterContext *ctx, void *arg, int job,      \
     const int start = (h *  job   ) / nb_jobs;                                 \
     const int end   = (h * (job+1)) / nb_jobs;                                 \
     const int inlinesize = in->linesize[plane] / sizeof(type);                 \
-    const int outlinesize = out->linesize[plane] / sizeof(type);               \
+    const int outlinesize = outf->linesize[plane] / sizeof(type);              \
     const type *indata = (const type *)in->data[plane];                        \
-    type *outrow = (type *)out->data[plane] + start * outlinesize;             \
+    type *outrow = (type *)outf->data[plane] + start * outlinesize;            \
     for (int i = start; i < end; i++, outrow += outlinesize) {                 \
         const int off_y = i - ycenter;                                         \
         type *out = outrow;                                                    \
@@ -118,7 +118,7 @@ static int filter##name##_slice_bilinear(AVFilterContext *ctx, void *arg,      \
     LenscorrectionCtx *rect = ctx->priv;                                       \
     ThreadData *td = arg;                                                      \
     AVFrame *in = td->in;                                                      \
-    AVFrame *out = td->out;                                                    \
+    AVFrame *outf = td->out;                                                   \
                                                                                \
     const int32_t *correction = rect->correction[plane];                       \
     const int fill_color = rect->fill_color[plane];                            \
@@ -131,9 +131,9 @@ static int filter##name##_slice_bilinear(AVFilterContext *ctx, void *arg,      \
     const int start = (h *  job   ) / nb_jobs;                                 \
     const int end   = (h * (job+1)) / nb_jobs;                                 \
     const int inlinesize = in->linesize[plane] / sizeof(type);                 \
-    const int outlinesize = out->linesize[plane] / sizeof(type);               \
+    const int outlinesize = outf->linesize[plane] / sizeof(type);              \
     const type *indata = (const type *)in->data[plane];                        \
-    type *outrow = (type *)out->data[plane] + start * outlinesize;             \
+    type *outrow = (type *)outf->data[plane] + start * outlinesize;            \
                                                                                \
     for (int i = start; i < end; i++, outrow += outlinesize) {                 \
         const int off_y = i - ycenter;                                         \
