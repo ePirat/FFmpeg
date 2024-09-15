@@ -474,14 +474,14 @@ union unaligned_16 { uint16_t l; } __attribute__((packed)) av_alias;
       (uint64_t)((const uint8_t*)(x))[5])
 #endif
 #ifndef AV_WB48
-#   define AV_WB48(p, darg) do {                \
-        uint64_t d = (darg);                    \
-        ((uint8_t*)(p))[5] = (d);               \
-        ((uint8_t*)(p))[4] = (d)>>8;            \
-        ((uint8_t*)(p))[3] = (d)>>16;           \
-        ((uint8_t*)(p))[2] = (d)>>24;           \
-        ((uint8_t*)(p))[1] = (d)>>32;           \
-        ((uint8_t*)(p))[0] = (d)>>40;           \
+#   define AV_WB48(p, darg) do {                      \
+        uint64_t av_wb_d = (darg);                    \
+        ((uint8_t*)(p))[5] = (av_wb_d);               \
+        ((uint8_t*)(p))[4] = (av_wb_d)>>8;            \
+        ((uint8_t*)(p))[3] = (av_wb_d)>>16;           \
+        ((uint8_t*)(p))[2] = (av_wb_d)>>24;           \
+        ((uint8_t*)(p))[1] = (av_wb_d)>>32;           \
+        ((uint8_t*)(p))[0] = (av_wb_d)>>40;           \
     } while(0)
 #endif
 
@@ -495,14 +495,14 @@ union unaligned_16 { uint16_t l; } __attribute__((packed)) av_alias;
       (uint64_t)((const uint8_t*)(x))[0])
 #endif
 #ifndef AV_WL48
-#   define AV_WL48(p, darg) do {                \
-        uint64_t d = (darg);                    \
-        ((uint8_t*)(p))[0] = (d);               \
-        ((uint8_t*)(p))[1] = (d)>>8;            \
-        ((uint8_t*)(p))[2] = (d)>>16;           \
-        ((uint8_t*)(p))[3] = (d)>>24;           \
-        ((uint8_t*)(p))[4] = (d)>>32;           \
-        ((uint8_t*)(p))[5] = (d)>>40;           \
+#   define AV_WL48(p, darg) do {                      \
+        uint64_t av_wl_d = (darg);                    \
+        ((uint8_t*)(p))[0] = (av_wl_d);               \
+        ((uint8_t*)(p))[1] = (av_wl_d)>>8;            \
+        ((uint8_t*)(p))[2] = (av_wl_d)>>16;           \
+        ((uint8_t*)(p))[3] = (av_wl_d)>>24;           \
+        ((uint8_t*)(p))[4] = (av_wl_d)>>32;           \
+        ((uint8_t*)(p))[5] = (av_wl_d)>>40;           \
     } while(0)
 #endif
 
