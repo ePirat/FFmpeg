@@ -209,15 +209,15 @@ static int parameter_block_obu(AVFormatContext *s, IAMFDemuxContext *c,
             const AVIAMFAudioElement *element = audio_element->celement;
 
             av_assert0(audio_element && element);
-            for (int i = 0; i < element->nb_layers; i++) {
-                const AVIAMFLayer *layer = element->layers[i];
+            for (int l_idx = 0; l_idx < element->nb_layers; l_idx++) {
+                const AVIAMFLayer *layer = element->layers[l_idx];
                 if (layer->flags & AV_IAMF_LAYER_FLAG_RECON_GAIN) {
                     unsigned int recon_gain_flags = ffio_read_leb(pb);
                     unsigned int bitcount = 7 + 5 * !!(recon_gain_flags & 0x80);
                     recon_gain_flags = (recon_gain_flags & 0x7F) | ((recon_gain_flags & 0xFF00) >> 1);
                     for (int j = 0; j < bitcount; j++) {
                         if (recon_gain_flags & (1 << j))
-                            recon->recon_gain[i][j] = avio_r8(pb);
+                            recon->recon_gain[l_idx][j] = avio_r8(pb);
                     }
                 }
             }
