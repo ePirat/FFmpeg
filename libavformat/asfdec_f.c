@@ -668,7 +668,6 @@ static int asf_read_marker(AVFormatContext *s)
 
     for (i = 0; i < count; i++) {
         int64_t pres_time;
-        int name_len;
 
         if (avio_feof(pb))
             return AVERROR_INVALIDDATA;
@@ -1140,7 +1139,7 @@ static int asf_parse_packet(AVFormatContext *s, AVIOContext *pb, AVPacket *pkt)
             return AVERROR_EOF;
         if (asf->packet_size_left < FRAME_HEADER_SIZE ||
             asf->packet_segments < 1 && asf->packet_time_start == 0) {
-            int ret = asf->packet_size_left + asf->packet_padsize;
+            ret = asf->packet_size_left + asf->packet_padsize;
 
             if (asf->packet_size_left && asf->packet_size_left < FRAME_HEADER_SIZE)
                 av_log(s, AV_LOG_WARNING, "Skip due to FRAME_HEADER_SIZE\n");
@@ -1209,7 +1208,6 @@ static int asf_parse_packet(AVFormatContext *s, AVIOContext *pb, AVPacket *pkt)
         if (asf_st->pkt.size != asf_st->packet_obj_size ||
             // FIXME is this condition sufficient?
             asf_st->frag_offset + asf->packet_frag_size > asf_st->pkt.size) {
-            int ret;
 
             if (asf_st->pkt.data) {
                 av_log(s, AV_LOG_INFO,
@@ -1568,7 +1566,6 @@ static int asf_read_seek(AVFormatContext *s, int stream_index,
     ASFContext *asf = s->priv_data;
     AVStream *st    = s->streams[stream_index];
     FFStream *const sti = ffstream(st);
-    int ret = 0;
 
     if (s->packet_size <= 0)
         return -1;
@@ -1590,7 +1587,7 @@ static int asf_read_seek(AVFormatContext *s, int stream_index,
     }
 
     if (!asf->index_read) {
-        ret = asf_build_simple_index(s, stream_index);
+        int ret = asf_build_simple_index(s, stream_index);
         if (ret < 0)
             asf->index_read = -1;
     }
