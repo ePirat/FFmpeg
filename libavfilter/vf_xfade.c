@@ -904,10 +904,10 @@ static void circleopen##name##_transition(AVFilterContext *ctx,                 
     for (int y = slice_start; y < slice_end; y++) {                                  \
         for (int x = 0; x < width; x++) {                                            \
             const float smooth = hypotf(x - width / 2, y - height / 2) / z + p;      \
-            for (int p = 0; p < s->nb_planes; p++) {                                 \
-                const type *xf0 = (const type *)(a->data[p] + y * a->linesize[p]);   \
-                const type *xf1 = (const type *)(b->data[p] + y * b->linesize[p]);   \
-                type *dst = (type *)(out->data[p] + y * out->linesize[p]);           \
+            for (int i = 0; i < s->nb_planes; i++) {                                 \
+                const type *xf0 = (const type *)(a->data[i] + y * a->linesize[i]);   \
+                const type *xf1 = (const type *)(b->data[i] + y * b->linesize[i]);   \
+                type *dst = (type *)(out->data[i] + y * out->linesize[i]);           \
                                                                                      \
                 dst[x] = mix(xf0[x], xf1[x], smoothstep(0.f, 1.f, smooth));          \
             }                                                                        \
@@ -933,10 +933,10 @@ static void circleclose##name##_transition(AVFilterContext *ctx,                
     for (int y = slice_start; y < slice_end; y++) {                                  \
         for (int x = 0; x < width; x++) {                                            \
             const float smooth = hypotf(x - width / 2, y - height / 2) / z + p;      \
-            for (int p = 0; p < s->nb_planes; p++) {                                 \
-                const type *xf0 = (const type *)(a->data[p] + y * a->linesize[p]);   \
-                const type *xf1 = (const type *)(b->data[p] + y * b->linesize[p]);   \
-                type *dst = (type *)(out->data[p] + y * out->linesize[p]);           \
+            for (int i = 0; i < s->nb_planes; i++) {                                 \
+                const type *xf0 = (const type *)(a->data[i] + y * a->linesize[i]);   \
+                const type *xf1 = (const type *)(b->data[i] + y * b->linesize[i]);   \
+                type *dst = (type *)(out->data[i] + y * out->linesize[i]);           \
                                                                                      \
                 dst[x] = mix(xf1[x], xf0[x], smoothstep(0.f, 1.f, smooth));          \
             }                                                                        \
