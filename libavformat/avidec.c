@@ -377,15 +377,15 @@ static void avi_read_nikon(AVFormatContext *s, uint64_t end)
         {
             uint64_t tag_end = avio_tell(s->pb) + size;
             while (avio_tell(s->pb) < tag_end && !avio_feof(s->pb)) {
-                uint16_t tag     = avio_rl16(s->pb);
-                uint16_t size    = avio_rl16(s->pb);
+                uint16_t avitag     = avio_rl16(s->pb);
+                uint16_t avisize    = avio_rl16(s->pb);
                 const char *name = NULL;
                 char buffer[64]  = { 0 };
                 uint64_t remaining = tag_end - avio_tell(s->pb);
-                size = FFMIN(size, remaining);
-                size -= avio_read(s->pb, buffer,
-                                  FFMIN(size, sizeof(buffer) - 1));
-                switch (tag) {
+                avisize = FFMIN(avisize, remaining);
+                avisize -= avio_read(s->pb, buffer,
+                                  FFMIN(avisize, sizeof(buffer) - 1));
+                switch (avitag) {
                 case 0x03:
                     name = "maker";
                     break;
@@ -400,7 +400,7 @@ static void avi_read_nikon(AVFormatContext *s, uint64_t end)
                 }
                 if (name)
                     av_dict_set(&s->metadata, name, buffer, 0);
-                avio_skip(s->pb, size);
+                avio_skip(s->pb, avisize);
             }
             break;
         }
@@ -1077,15 +1077,15 @@ end_of_header:
     dict_entry = av_dict_get(s->metadata, "ISFT", NULL, 0);
     if (dict_entry && !strcmp(dict_entry->value, "PotEncoder"))
         for (i = 0; i < s->nb_streams; i++) {
-            AVStream *st = s->streams[i];
-            if (   st->codecpar->codec_id == AV_CODEC_ID_MPEG1VIDEO
-                || st->codecpar->codec_id == AV_CODEC_ID_MPEG2VIDEO)
-                ffstream(st)->need_parsing = AVSTREAM_PARSE_FULL;
+            AVStream *stream = s->streams[i];
+            if (   stream->codecpar->codec_id == AV_CODEC_ID_MPEG1VIDEO
+                || stream->codecpar->codec_id == AV_CODEC_ID_MPEG2VIDEO)
+                ffstream(stream)->need_parsing = AVSTREAM_PARSE_FULL;
         }
 
     for (i = 0; i < s->nb_streams; i++) {
-        AVStream *st = s->streams[i];
-        if (ffstream(st)->nb_index_entries)
+        AVStream *stream = s->streams[i];
+        if (ffstream(stream)->nb_index_entries)
             break;
     }
     // DV-in-AVI cannot be non-interleaved, if set this must be
@@ -1487,7 +1487,7 @@ resync:
         FFStream *const sti = ffstream(st);
         AVIStream *ast = st->priv_data;
         int dv_demux = CONFIG_DV_DEMUXER && avi->dv_demux;
-        int size, err;
+        int size;
 
         if (get_subtitle_pkt(s, st, pkt))
             return 0;
