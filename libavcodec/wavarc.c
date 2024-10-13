@@ -835,8 +835,8 @@ fail:
             uint8_t *dst = (uint8_t *)frame->extended_data[ch];
             const int *src = s->samples[ch] + s->offset;
 
-            for (int n = 0; n < frame->nb_samples; n++)
-                dst[n] = src[n] * (1U << s->shift) + 0x80U;
+            for (int i = 0; i < frame->nb_samples; i++)
+                dst[i] = src[i] * (1U << s->shift) + 0x80U;
         }
         break;
     case AV_SAMPLE_FMT_S16P:
@@ -844,8 +844,8 @@ fail:
             int16_t *dst = (int16_t *)frame->extended_data[ch];
             const int *src = s->samples[ch] + s->offset;
 
-            for (int n = 0; n < frame->nb_samples; n++)
-                dst[n] = src[n] * (1U << s->shift);
+            for (int i = 0; i < frame->nb_samples; i++)
+                dst[i] = src[i] * (1U << s->shift);
         }
         break;
     }
