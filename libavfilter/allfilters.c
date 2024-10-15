@@ -136,6 +136,7 @@ extern const AVFilter ff_af_highpass;
 extern const AVFilter ff_af_highshelf;
 extern const AVFilter ff_af_join;
 extern const AVFilter ff_af_ladspa;
+extern const AVFilter ff_af_libspatialaudio;
 extern const AVFilter ff_af_loudnorm;
 extern const AVFilter ff_af_lowpass;
 extern const AVFilter ff_af_lowshelf;
