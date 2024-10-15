@@ -152,6 +152,7 @@ OBJS-$(CONFIG_LADSPA_FILTER)                 += af_ladspa.o
 OBJS-$(CONFIG_LOUDNORM_FILTER)               += af_loudnorm.o ebur128.o
 OBJS-$(CONFIG_LOWPASS_FILTER)                += af_biquads.o
 OBJS-$(CONFIG_LOWSHELF_FILTER)               += af_biquads.o
+OBJS-$(CONFIG_LIBSPATIALAUDIO_FILTER)		 += af_libspatialaudio_c.o af_libspatialaudio.o
 OBJS-$(CONFIG_LV2_FILTER)                    += af_lv2.o
 OBJS-$(CONFIG_MCOMPAND_FILTER)               += af_mcompand.o
 OBJS-$(CONFIG_PAN_FILTER)                    += af_pan.o

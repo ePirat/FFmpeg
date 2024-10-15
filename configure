@@ -274,6 +274,7 @@ External library support:
   --enable-libsmbclient    enable Samba protocol via libsmbclient [no]
   --enable-libsnappy       enable Snappy compression, needed for hap encoding [no]
   --enable-libsoxr         enable Include libsoxr resampling [no]
+  --enable-libspatialaudio enable ambisonics/binaural renderer support via libspatialaudio [no]
   --enable-libspeex        enable Speex de/encoding via libspeex [no]
   --enable-libsrt          enable Haivision SRT protocol via libsrt [no]
   --enable-libssh          enable SFTP protocol via libssh [no]
@@ -1991,6 +1992,7 @@ EXTERNAL_LIBRARY_LIST="
     libsnappy
     libsoxr
     libspeex
+    libspatialaudio
     libsrt
     libssh
     libsvtav1
@@ -3990,6 +3992,7 @@ signature_filter_deps="gpl avcodec avformat"
 smartblur_filter_deps="gpl swscale"
 sobel_opencl_filter_deps="opencl"
 sofalizer_filter_deps="libmysofa"
+libspatialaudio_filter_deps="libspatialaudio"
 spp_filter_deps="gpl avcodec"
 spp_filter_select="idctdsp fdctdsp me_cmp pixblockdsp"
 sr_filter_deps="avformat swscale"
@@ -7039,6 +7042,7 @@ enabled libsnappy         && require libsnappy snappy-c.h snappy_compress -lsnap
 enabled libsoxr           && require libsoxr soxr.h soxr_create -lsoxr
 enabled libssh            && require_pkg_config libssh "libssh >= 0.6.0" libssh/sftp.h sftp_init
 enabled libspeex          && require_pkg_config libspeex speex speex/speex.h speex_decoder_init
+enabled libspatialaudio   && require_pkg_config_cxx libspatialaudio libspatialaudio spatialaudio/Ambisonics.h "CAmbisonicDecoder"
 enabled libsrt            && require_pkg_config libsrt "srt >= 1.3.0" srt/srt.h srt_socket
 enabled libsvtav1         && require_pkg_config libsvtav1 "SvtAv1Enc >= 0.9.0" EbSvtAv1Enc.h svt_av1_enc_init_handle
 enabled libtensorflow     && require libtensorflow tensorflow/c/c_api.h TF_Version -ltensorflow
