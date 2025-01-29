@@ -274,6 +274,43 @@ typedef struct FFCodec {
                                 unsigned flags,
                                 const void **out_configs,
                                 int *out_num_configs);
+
+    union {
+        /**
+         * The supported video properties for this codec
+         */
+        struct {
+            /**
+             * Array of supported framerates, terminated by {0, 0}.
+             */
+            const AVRational *framerates;
+
+            /**
+             * Array of supported pixel formats, terminated by AV_PIX_FMT_NONE.
+             */
+            const enum AVPixelFormat *pix_fmts;
+        } video_configs;
+
+        /**
+         * The supported audio properties for this codec
+         */
+        struct {
+            /**
+             * Array of supported samplerates, terminated by 0.
+             */
+            const int *samplerates;
+
+            /**
+             * Array of supported sample formats, terminated by AV_SAMPLE_FMT_NONE.
+             */
+            const enum AVSampleFormat *sample_fmts;
+
+            /**
+             * Array of supported channel layouts, terminated with a zeroed layout (`{0}`).
+             */
+            const AVChannelLayout *ch_layouts;
+        } audio_configs;
+    };
 } FFCodec;
 
 /**
@@ -326,6 +363,15 @@ int ff_default_get_supported_config(const AVCodecContext *avctx,
 #define FF_CODEC_RECEIVE_PACKET_CB(func)                  \
     .cb_type           = FF_CODEC_CB_TYPE_RECEIVE_PACKET, \
     .cb.receive_packet = (func)
+
+#define FF_CODEC_SET_CONFIG_COMPAT_HELPER(legacy_name, name, val)   \
+    .video_configs.name = val,                                      \
+    FF_DISABLE_DEPRECATION_WARNINGS                                 \
+    .p.legacy_name      = val                                       \
+    FF_ENABLE_DEPRECATION_WARNINGS
+
+#define FF_CODEC_PIX_FMTS(fmts) \
+    FF_CODEC_SET_CONFIG_COMPAT_HELPER(pix_fmts, pix_fmts, fmts)
 
 static av_always_inline const FFCodec *ffcodec(const AVCodec *codec)
 {

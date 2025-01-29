@@ -761,18 +761,19 @@ int ff_default_get_supported_config(const AVCodecContext *avctx,
                                     const void **out_configs,
                                     int *out_num_configs)
 {
+    const FFCodec *ffc = ffcodec(codec);
     switch (config) {
 FF_DISABLE_DEPRECATION_WARNINGS
     case AV_CODEC_CONFIG_PIX_FORMAT:
-        WRAP_CONFIG(AVMEDIA_TYPE_VIDEO, codec->pix_fmts, enum AVPixelFormat, AV_PIX_FMT_NONE);
+        WRAP_CONFIG(AVMEDIA_TYPE_VIDEO, ffc->video_configs.pix_fmts, enum AVPixelFormat, AV_PIX_FMT_NONE);
     case AV_CODEC_CONFIG_FRAME_RATE:
-        WRAP_CONFIG(AVMEDIA_TYPE_VIDEO, codec->supported_framerates, AVRational, {0});
+        WRAP_CONFIG(AVMEDIA_TYPE_VIDEO, ffc->video_configs.framerates, AVRational, {0});
     case AV_CODEC_CONFIG_SAMPLE_RATE:
-        WRAP_CONFIG(AVMEDIA_TYPE_AUDIO, codec->supported_samplerates, int, 0);
+        WRAP_CONFIG(AVMEDIA_TYPE_AUDIO, ffc->audio_configs.samplerates, int, 0);
     case AV_CODEC_CONFIG_SAMPLE_FORMAT:
-        WRAP_CONFIG(AVMEDIA_TYPE_AUDIO, codec->sample_fmts, enum AVSampleFormat, AV_SAMPLE_FMT_NONE);
+        WRAP_CONFIG(AVMEDIA_TYPE_AUDIO, ffc->audio_configs.sample_fmts, enum AVSampleFormat, AV_SAMPLE_FMT_NONE);
     case AV_CODEC_CONFIG_CHANNEL_LAYOUT:
-        WRAP_CONFIG(AVMEDIA_TYPE_AUDIO, codec->ch_layouts, AVChannelLayout, {0});
+        WRAP_CONFIG(AVMEDIA_TYPE_AUDIO, ffc->audio_configs.ch_layouts, AVChannelLayout, {0});
 FF_ENABLE_DEPRECATION_WARNINGS
 
     case AV_CODEC_CONFIG_COLOR_RANGE:
