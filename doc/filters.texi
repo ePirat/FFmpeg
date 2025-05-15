@@ -31173,6 +31173,26 @@ metadata=mode=print:file='pipe\:4'
 @end example
 @end itemize
 
+@section noop
+Pass the inputs unchanged to the outputs.
+
+This filter is equivalent to the null/anull filters but works with
+multiple video/audio inputs. The respective number of inputs must
+be given via options. By default the filter accepts one video input
+followed by one audio input.
+
+The video inputs always come first, followed by the audio inputs.
+
+The following options are supported:
+
+@table @option
+@item v
+The number of video inputs. Default value is @var{1}.
+
+@item a
+The number of audio inputs. Default value is @var{1}.
+@end table
+
 @section perms, aperms
 
 Set read/write permissions for the output frames.

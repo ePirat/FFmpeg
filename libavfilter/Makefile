@@ -633,6 +633,7 @@ OBJS-$(CONFIG_AGRAPHMONITOR_FILTER)          += f_graphmonitor.o
 OBJS-$(CONFIG_AHISTOGRAM_FILTER)             += avf_ahistogram.o
 OBJS-$(CONFIG_APHASEMETER_FILTER)            += avf_aphasemeter.o
 OBJS-$(CONFIG_AVECTORSCOPE_FILTER)           += avf_avectorscope.o
+OBJS-$(CONFIG_NOOP_FILTER)                   += avf_noop.o
 OBJS-$(CONFIG_CONCAT_FILTER)                 += avf_concat.o
 OBJS-$(CONFIG_SHOWCQT_FILTER)                += avf_showcqt.o lswsutils.o lavfutils.o
 OBJS-$(CONFIG_SHOWCWT_FILTER)                += avf_showcwt.o
