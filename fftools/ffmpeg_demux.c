@@ -28,6 +28,7 @@
 #include "libavutil/display.h"
 #include "libavutil/error.h"
 #include "libavutil/intreadwrite.h"
+#include "libavutil/log.h"
 #include "libavutil/mem.h"
 #include "libavutil/opt.h"
 #include "libavutil/parseutils.h"
@@ -474,8 +475,10 @@ static int input_packet_process(Demuxer *d, AVPacket *pkt, unsigned *send_flags)
             start_time += f->start_time != AV_NOPTS_VALUE ? f->start_time : 0;
             start_time += start_at_zero ? 0 : f->start_time_effective;
         }
-        if (ds->dts >= d->recording_time + start_time)
+        if (ds->dts >= d->recording_time + start_time) {
             *send_flags |= DEMUX_SEND_STREAMCOPY_EOF;
+            av_log(NULL, AV_LOG_INFO, "Time for EOF on %i (%s)!\n", ist->index, av_get_media_type_string(ist->par->codec_type));
+        }
     }
 
     ds->data_size += pkt->size;
@@ -1098,6 +1101,7 @@ int ist_filter_add(InputStream *ist, InputFilter *ifilter, int is_simple,
     opts->name = av_strdup(ds->dec_name);
     if (!opts->name)
         return AVERROR(ENOMEM);
+    av_log(NULL, AV_LOG_INFO, "Setting opts trim_end_us %lld %s\n", opts->trim_end_us, opts->name);
 
     opts->flags |= IFILTER_FLAG_AUTOROTATE * !!(ds->autorotate) |
                    IFILTER_FLAG_REINIT     * !!(ds->reinit_filters) |

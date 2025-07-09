@@ -2098,6 +2098,7 @@ static int setup_sync_queues(Muxer *mux, AVFormatContext *oc,
             if (!IS_AV_ENC(ost, type))
                 continue;
 
+            av_log(oc, AV_LOG_INFO, "Using sync queue\n");
             ret = sch_sq_add_enc(mux->sch, sq_idx, ms->sch_idx_enc,
                                  shortest || ms->max_frames < INT64_MAX,
                                  ms->max_frames);

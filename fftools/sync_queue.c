@@ -232,10 +232,18 @@ static void queue_head_update(SyncQueue *sq)
     for (unsigned int i = 0; i < sq->nb_streams; i++) {
         SyncQueueStream *st_head  = &sq->streams[sq->head_stream];
         SyncQueueStream *st_other = &sq->streams[i];
+        if (st_head == st_other)
+            continue;
+        av_log(NULL, AV_LOG_INFO, "Comparing sq stream %i (%s) and %i (%s)\n",
+            sq->head_stream, av_ts2timestr(st_head->head_ts, &st_head->tb),
+            i, av_ts2timestr(st_other->head_ts, &st_other->tb));
         if (st_other->limiting && st_other->head_ts != AV_NOPTS_VALUE &&
             av_compare_ts(st_other->head_ts, st_other->tb,
-                          st_head->head_ts,  st_head->tb) < 0)
+                          st_head->head_ts,  st_head->tb) < 0) {
             sq->head_stream = i;
+            av_log(NULL, AV_LOG_INFO, "Updating head stream to %i\n",
+                sq->head_stream);
+        }
     }
 }
 

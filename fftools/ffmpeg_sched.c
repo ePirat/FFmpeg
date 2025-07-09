@@ -26,6 +26,7 @@
 #include "cmdutils.h"
 #include "ffmpeg_sched.h"
 #include "ffmpeg_utils.h"
+#include "libavutil/log.h"
 #include "sync_queue.h"
 #include "thread_queue.h"
 
@@ -907,6 +908,7 @@ int sch_sq_add_enc(Scheduler *sch, unsigned sq_idx, unsigned enc_idx,
     if (ret < 0)
         return ret;
 
+    av_log(NULL, AV_LOG_INFO, "Adding limiting stream %i\n", ret);
     enc->sq_idx[0] = sq_idx;
     enc->sq_idx[1] = ret;
 
@@ -1941,8 +1943,10 @@ demux_stream_send_to_dst(Scheduler *sch, const SchedulerNode dst,
     return ret;
 
 finish:
-    if (dst.type == SCH_NODE_TYPE_MUX)
+    if (dst.type == SCH_NODE_TYPE_MUX) {
+        av_log(NULL, AV_LOG_INFO, "Sending NULL packet to mux!\n");
         send_to_mux(sch, &sch->mux[dst.idx], dst.idx_stream, NULL);
+    }
     else
         tq_send_finish(sch->dec[dst.idx].queue, 0);
 

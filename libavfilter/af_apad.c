@@ -27,6 +27,7 @@
 
 #include "libavutil/avstring.h"
 #include "libavutil/channel_layout.h"
+#include "libavutil/error.h"
 #include "libavutil/opt.h"
 #include "libavutil/samplefmt.h"
 #include "libavutil/avassert.h"
@@ -146,19 +147,25 @@ static int activate(AVFilterContext *ctx)
         int ret;
 
         ret = ff_inlink_consume_frame(inlink, &frame);
-        if (ret < 0)
+        if (ret < 0) {
+            av_log(ctx, AV_LOG_INFO, "Got status on consume frame: %s\n", av_err2str(ret));
             return ret;
+        }
         if (ret > 0)
             return filter_frame(inlink, frame);
     }
 
-    if (!s->eof && ff_inlink_acknowledge_status(inlink, &status, &pts))
+    if (!s->eof && ff_inlink_acknowledge_status(inlink, &status, &pts)) {
+        av_log(ctx, AV_LOG_INFO, "Got inlink status: %s\n", av_err2str(status));
         s->eof = status == AVERROR_EOF;
+    }
 
     if (s->eof) {
+        av_log(ctx, AV_LOG_INFO, "Pushing frame after EOF\n");
         int ret = push_frame(outlink);
 
         if (ret == AVERROR_EOF) {
+            av_log(ctx, AV_LOG_INFO, "Setting outlink status: %s\n", av_err2str(ret));
             ff_outlink_set_status(outlink, AVERROR_EOF, s->next_pts);
             return 0;
         }

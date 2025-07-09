@@ -32,6 +32,7 @@
 #include "libavutil/bprint.h"
 #include "libavutil/channel_layout.h"
 #include "libavutil/downmix_info.h"
+#include "libavutil/log.h"
 #include "libavutil/mem.h"
 #include "libavutil/opt.h"
 #include "libavutil/pixdesc.h"
@@ -1792,6 +1793,7 @@ static int configure_input_video_filter(FilterGraph *fg, AVFilterGraph *graph,
     }
 
     snprintf(name, sizeof(name), "trim_in_%s", ifp->opts.name);
+    av_log(NULL, AV_LOG_INFO, "Inserting video trim filter for %s\n", ifp->opts.name);
     ret = insert_trim(fg, ifp->opts.trim_start_us, ifp->opts.trim_end_us,
                       &last_filter, &pad_idx, name);
     if (ret < 0)
@@ -1846,6 +1848,7 @@ static int configure_input_audio_filter(FilterGraph *fg, AVFilterGraph *graph,
     last_filter = ifilter->filter;
 
     snprintf(name, sizeof(name), "trim for input stream %s", ifp->opts.name);
+    av_log(NULL, AV_LOG_INFO, "Inserting audio trim filter for %s\n", ifp->opts.name);
     ret = insert_trim(fg, ifp->opts.trim_start_us, ifp->opts.trim_end_us,
                       &last_filter, &pad_idx, name);
     if (ret < 0)
